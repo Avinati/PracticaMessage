@@ -1,0 +1,399 @@
+/* ================================ ОСНОВНОЙ КОНТЕЙНЕР =========================================== */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; 
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #F2E8CF;
+    font-family:'Equilibrist';
+    color: #386641;
+    height: 100%; 
+}
+
+/* ================================ Контейнер для меню =========================================== */
+.content-wrapper {
+    display: flex;
+    flex: 1;
+    margin: 0 120px;
+    margin-top: 55px;
+    gap: 40px;
+}
+
+.menu {
+    background-color: #6A994E;
+    width: 350px;
+    height: 320px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-radius: 15px;
+    flex-shrink: 0;
+}
+
+.menu-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    padding: 10px;
+    transition: background-color 0.2s;
+    margin-bottom: 10px;
+}
+
+.menu-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.menu-link:last-child {
+    margin-bottom: 0;
+}
+
+.foryou-btn, .frinds-btn, .chat-btn, .set-btn {
+    background: none;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin-right: 15px;
+}
+
+.foryou-btn:hover, .frinds-btn:hover, .chat-btn:hover, .set-btn:hover {
+    opacity: 0.7;
+}
+
+.foryou-btn img, .frinds-btn img, .chat-btn img, .set-btn img {
+    width: 40px;
+    height: 40px;
+    display: block;
+}
+
+.menu-link p {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    flex-grow: 1;
+}
+
+.text1 {
+    color: #BC4749;
+}
+
+/* ================================ СТИЛИ ДЛЯ СПИСКА ЧАТОВ ===================================== */
+.chats-container {
+    flex: 1;
+}
+
+.chats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chat-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #6A994E;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    position: relative; /* Для позиционирования бейджа */
+}
+
+.chat-item:hover {
+    background: #5a8a3e;
+    border-color: #386641;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chat-avatar {
+    position: relative;
+    margin-right: 15px;
+}
+
+.chat-avatar img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.online-status {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #6A994E;
+}
+
+.online-status.online {
+    background-color: #BC4749;
+}
+
+.online-status.offline {
+    background-color: #9E9E9E;
+}
+
+/* Бейдж непрочитанных сообщений в правом верхнем углу */
+.unread-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background-color: #BC4749;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.chat-info {
+    flex: 1;
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.chat-name {
+    font-weight: bold;
+    color: #386641;
+    font-size: 16px;
+}
+
+.chat-time {
+    font-size: 12px;
+    color: #386641;
+    opacity: 0.8;
+}
+
+.chat-last-message {
+    margin: 0;
+    color: #386641;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* ================================ ОБЩИЙ КОНТЕЙНЕР ДЛЯ СЕКЦИЙ ================================== */
+.friends-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin-right: 120px;
+    margin-bottom: 55px;
+}
+
+/* ================================ ЗАГОЛОВКИ СЕКЦИЙ ============================================ */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 10px;
+}
+
+.section-title {
+    color: #386641;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.friends-count, .requests-count {
+    color: #6A994E;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* ================================ СТИЛИ ДЛЯ СПИСКА ДРУЗЕЙ ===================================== */
+.friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.friend-card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #6A994E;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.friend-card:hover {
+    background: #6A994E;
+    border-color: #6A994E;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.friend-avatar-container {
+    position: relative;
+    margin-right: 15px;
+}
+
+.friend-avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #6A994E, #386641);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.status-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.status-dot.online {
+    background-color: #BC4749;
+}
+
+.status-dot.offline {
+    background-color: #9E9E9E;
+}
+
+.friend-info {
+    flex: 1;
+}
+
+.friend-name {
+    margin: 0 0 5px 0;
+    color: #386641;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.friend-status {
+    color: #386641;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.friend-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ================================ СТИЛИ ДЛЯ ЗАПРОСОВ В ДРУЗЬЯ ================================= */
+.requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.request-card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #6A994E;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+}
+
+.request-card:hover {
+    background: #6A994E;
+    border-color: #6A994E;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.request-avatar-container {
+    position: relative;
+    margin-right: 15px;
+}
+
+.request-avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #6A994E, #386641);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.request-info {
+    flex: 1;
+}
+
+.request-name {
+    margin: 0 0 5px 0;
+    color: #386641;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.mutual-friends {
+    color: #386641;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.request-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-btn:hover {
+    background-color: #BC4749;
+    transform: scale(1.1);
+}
+
+.accept-btn:hover {
+    background-color: #386641;
+    transform: scale(1.1);
+}
+
+.decline-btn:hover {
+    background-color: #BC4749;
+    transform: scale(1.1);
+}
+
+.action-btn img {
+    display: block;
+}
