@@ -1,0 +1,253 @@
+/* ================================ ОСНОВНОЙ КОНТЕЙНЕР =========================================== */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; 
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #F2E8CF;
+    font-family:'Equilibrist';
+    color: #386641;
+    height: 100%; 
+}
+
+/* ================================ Контейнер для меню =========================================== */
+.content-wrapper {
+    display: flex;
+    flex: 1;
+    margin: 0 120px;
+    margin-top: 55px;
+    gap: 40px;
+}
+
+.menu {
+    background-color: #6A994E;
+    width: 350px;
+    height: 320px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-radius: 15px;
+    flex-shrink: 0;
+}
+
+.menu-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    padding: 10px;
+    transition: background-color 0.2s;
+    margin-bottom: 10px;
+}
+
+.menu-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.menu-link:last-child {
+    margin-bottom: 0;
+}
+
+.foryou-btn, .frinds-btn, .chat-btn, .set-btn {
+    background: none;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin-right: 15px;
+}
+
+.foryou-btn:hover, .frinds-btn:hover, .chat-btn:hover, .set-btn:hover {
+    opacity: 0.7;
+}
+
+.foryou-btn img, .frinds-btn img, .chat-btn img, .set-btn img {
+    width: 40px;
+    height: 40px;
+    display: block;
+}
+
+.menu-link p {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    flex-grow: 1;
+}
+
+.text1
+{
+    color: #BC4749;
+}
+/* ================================ КОНТЕЙНЕР НАСТРОЕК =========================================== */
+.settings-container {
+    flex: 1;
+    background: #A7C957;
+    border-radius: 15px;
+    padding: 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 55px;
+}
+
+/* ================================ ОБЛОЖКА И АВАТАР =========================================== */
+.profile-header {
+    width: 100%;
+}
+
+.cover-photo {
+    background: linear-gradient(135deg, #6A994E, #386641);
+    height: 250px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.avatar-section {
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+    top: 20px;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid white;
+    background-color: white;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+.username {
+    color: #386641;
+    margin: 5px 0 15px 0;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.photo-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.change-btn {
+    color: #386641;
+    background-color: #6A994E;
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    margin-bottom: 10px;
+}
+
+.change-btn:hover {
+    background: #386641;
+    color: #6A994E;
+}
+
+/* ================================ ФОРМА НАСТРОЕК =========================================== */
+.settings-form {
+    padding: 30px;
+}
+
+.setting-group {
+    margin-bottom: 25px;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #386641;
+    font-size: 1em;
+}
+
+.setting-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    background-color: #F2E8CF;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: border-color 0.3s ease;
+    box-sizing: border-box;
+    color: #386641;
+}
+
+.setting-input:focus {
+    outline: none;
+    border-color: #6A994E;
+}
+
+/* ================================ КНОПКИ ДЕЙСТВИЙ =========================================== */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.delete-account-btn {
+    background: #BC4749;
+    color: #ffffff;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.delete-account-btn:hover {
+    background: #A03A3C;
+}
+
+.save-changes-btn {
+    background: #6A994E;
+    color: #386641;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.save-changes-btn:hover {
+    background: #2D5534;
+}
+
+/* ================================ АДАПТИВНОСТЬ =========================================== */
+@media (max-width: 768px) {
+    .settings-container {
+        margin: 10px;
+    }
+    
+    .photo-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .change-btn {
+        width: 200px;
+    }
+    
+    .settings-form {
+        padding: 20px;
+    }
+}
