@@ -13,7 +13,6 @@ import Settings from './components/settings'
 import Messanger from './components/messanger'
 import Profile from './components/profile'
 import Frinds from './components/Frineds'
-//оавоаровраоварвоа
 
 function App() {
   return (
@@ -23,7 +22,7 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
         <Route path='/favorite' element={<Favorite />} />
-        <Route path='/profile' element={<Profile />} />
+        <Route path='/profile' element={<Profile />} /> 
         <Route path='/settings' element={<Settings />} />
         <Route path='/messanger' element={<Messanger />} />
         <Route path='/chat' element={<Chat />} />

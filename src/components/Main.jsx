@@ -29,7 +29,7 @@ function Main() {
                     
                 </button>
                 </Link>
-                <Link to="/profile">
+                <Link to="/login">
                 <button className="pfp-btn">
                     <img src={Pfp} alt="Профиль" />
                 </button>
