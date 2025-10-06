@@ -1,0 +1,93 @@
+/* Profile.css */
+
+/* Основной контейнер профиля */
+.main-profile {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    background-color: #6A994E;
+}
+
+.profile-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 800px;
+}
+
+/* Аватарка */
+.avatar-section img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Информация профиля в ряд */
+.profile-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+    gap: 15px;
+}
+
+.profile-text {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.profile-text h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.profile-text p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Кнопки действий */
+.profile-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.profile-actions button:hover {
+    background-color: #f0f0f0;
+}
+
+.profile-actions button img {
+    width: 20px;
+    height: 20px;
+}
+
+/* Стили для header */
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 10px 20px;
+}
+
+
+
+
+
+
+
