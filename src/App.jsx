@@ -13,7 +13,7 @@ import Settings from './components/settings'
 import Messanger from './components/messanger'
 import Profile from './components/profile'
 import Frinds from './components/Frineds'
-
+//оавоаровраоварвоа
 
 function App() {
   return (
