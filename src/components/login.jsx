@@ -20,7 +20,9 @@ function Login() {
                     <a href="#" className="forgot-link">Забыли пароль?</a>
                 </div>
                 
+                <Link to="/profile">
                 <button className="login-button">Войти</button>
+                </Link>
                 
                 <div className="register-section">
                     <span className="register-text">Еще нет аккаунта? </span>

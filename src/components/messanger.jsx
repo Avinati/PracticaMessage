@@ -15,7 +15,7 @@ import App from "../App";
 
 function Main() {
 
-    // Пример данных чатов (замените на реальные данные)
+    
     const chats = [
         { id: 1, name: "Алексей Петров", lastMessage: "Привет! Как дела?",unread: 2, online: true },
         { id: 2, name: "Мария Иванова", lastMessage: "Встречаемся завтра?",  unread: 0, online: true },
@@ -39,7 +39,7 @@ function Main() {
                     
                 </button>
                 </Link>
-                <Link to="/profile">
+                <Link to="/login">
                 <button className="pfp-btn">
                     <img src={Pfp} alt="Профиль" />
                 </button>
