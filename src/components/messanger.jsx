@@ -76,6 +76,7 @@ function Main() {
                 <div className="chats-container">
                     <div className="chats-list">
                         {chats.map(chat => (
+                            <Link to="/chat">
                             <div key={chat.id} className="chat-item">
                                 {/* Бейдж непрочитанных сообщений в правом верхнем углу */}
                                 {chat.unread > 0 && (
@@ -94,6 +95,7 @@ function Main() {
                                     <p className="chat-last-message">{chat.lastMessage}</p>
                                 </div>
                             </div>
+                            </Link>
                         ))}
                     </div>
                 </div>
