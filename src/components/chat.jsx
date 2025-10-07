@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
 import Logo from '/public/Лого.png'
 import Fav from '/public/Fav.png'
 import Pfp from '/public/pfp.png'
@@ -31,11 +32,6 @@ function Chat() {
         setNewMessage("");
     };
 
-    const handleBack = () => {
-        // Функция для возврата назад
-        window.history.back();
-    };
-
     return (
         <>
             <div className="main-content">
@@ -54,11 +50,12 @@ function Chat() {
 
                 <div className="content-wrapper">
                     <div className="chat-container">
-                        {/* Заголовок чата */}
                         <div className="chat-header">
-                            <button className="back-button" onClick={handleBack}>
+                            <Link to="/messanger">
+                            <button className="back-button">
                                 <img src={Back} alt="Назад" />
                             </button>
+                            </Link>
                             <div className="chat-user-info">
                                 <div className="avatar-container">
                                     <img src={Pfp} alt="Алексей Петров" className="chat-user-avatar" />
@@ -70,8 +67,6 @@ function Chat() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* Область сообщений */}
                         <div className="messages-container">
                             {messages.map((message) => (
                                 <div 
@@ -85,8 +80,6 @@ function Chat() {
                                 </div>
                             ))}
                         </div>
-
-                        {/* Форма ввода сообщения */}
                         <form className="message-input-form" onSubmit={handleSendMessage}>
                             <div className="input-container">
                                 <button type="button" className="attach-button">

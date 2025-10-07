@@ -95,6 +95,12 @@ html, body {
     gap: 12px;
 }
 
+.chat-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
 .chat-item {
     display: flex;
     align-items: flex-start;
@@ -104,6 +110,8 @@ html, body {
     transition: all 0.3s ease;
     border: 1px solid transparent;
     position: relative;
+    min-height: 60px;
+    box-sizing: border-box;
 }
 
 .chat-item:hover {
@@ -116,12 +124,14 @@ html, body {
 .chat-avatar {
     position: relative;
     margin-right: 15px;
-    flex-shrink: 0; 
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
 }
 
 .chat-avatar img {
-    width: 50px;
-    height: 50px;
+    width: 100%;
+    height: 100%;
     border-radius: 50%;
     object-fit: cover;
 }
@@ -138,10 +148,12 @@ html, body {
 
 .online-status.online {
     background-color: #BC4749;
+    left: 180px;
 }
 
 .online-status.offline {
     background-color: #9E9E9E;
+    left: 180px;
 }
 
 .unread-badge {
@@ -158,19 +170,23 @@ html, body {
     justify-content: center;
     font-size: 12px;
     font-weight: bold;
+    z-index: 1;
 }
 
 .chat-info {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
 }
 
-.chat-header {
+.chat-header-info {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start; 
+    align-items: flex-start;
     margin-bottom: 5px;
+    width: 100%;
 }
 
 .chat-name {
@@ -178,14 +194,21 @@ html, body {
     color: #386641;
     font-size: 16px;
     margin: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 8px;
 }
 
 .chat-time {
-    font-size: 12px;
+    position: absolute;
     color: #386641;
-    opacity: 0.8;
-    margin: 0;
-    align-self: flex-end; 
+    font-size: 12px;
+    opacity: 0.7;
+    flex-shrink: 0;
+    margin-top: 25px;
+    margin-left: 1150px;
 }
 
 .chat-last-message {
@@ -194,4 +217,8 @@ html, body {
     font-size: 14px;
     opacity: 0.9;
     line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
 }
