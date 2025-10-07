@@ -65,10 +65,11 @@ function Main() {
                         <p className="text">Настройки</p>
                     </Link>
                 </div>
+                
                 <div className="news-feed">
                     <div className="news-items">
                         <div className="news-item">
-                            <Link>
+                            <Link to='/post'>
                             <div className="news-author">
                                 <img src={Pfp} alt="Автор" className="author-avatar" />
                                 <span className="author-name">Иван Иванов</span>
@@ -92,6 +93,7 @@ function Main() {
                             </div>
                             </Link>
                         </div>
+                        
 
                         <div className="news-item">
                             <div className="news-author">
