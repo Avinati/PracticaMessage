@@ -1,0 +1,303 @@
+
+.favorite-content {
+    flex: 1;
+    padding: 40px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto; /* Включаем вертикальный скроллинг */
+    width: 100%;
+}
+
+/* Скрываем скроллбар но оставляем функциональность */
+.favorite-content::-webkit-scrollbar {
+    width: 0; /* Для Chrome, Safari, Edge */
+    display: none; /* Для Firefox */
+}
+
+.posts-container {
+    width: 100%;
+    max-width: 1200px;
+}
+
+.favorite-header {
+    margin-bottom: 40px;
+    width: 100%;
+    max-width: 1200px;
+    text-align: center;
+}
+
+.favorite-header h1 {
+    font-size: 32px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+}
+
+.favorite-subtitle {
+    color: #666;
+    font-size: 16px;
+    margin: 0;
+}
+
+/* Сетка постов */
+.posts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* Стили для большой карточки поста */
+.post-card {
+    background: #A7C957;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12);
+    width: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+}
+
+/* Заголовок поста */
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 30px;
+    background: transparent;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.username {
+    font-weight: 600;
+    color: #333;
+    font-size: 17px;
+}
+
+.favpost-icon {
+    width: 45px;
+    height: 45px;
+}
+
+/* Контент поста */
+.post-content {
+    padding: 25px 30px;
+    position: relative;
+}
+
+.post-content p {
+    margin: 0 0 18px 0;
+    color: #333;
+    line-height: 1.6;
+    font-size: 17px;
+}
+
+/* Контейнер для изображения */
+.post-image-container {
+    width: 100%;
+    margin: 20px 0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.post-image {
+    width: 100%;
+}
+
+.placeholder-image {
+    width: 100%;
+    height: 280px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 500;
+    font-size: 20px;
+}
+
+/* Панель действий */
+.post-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 18px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px 15px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    font-size: 15px;
+    color: #386641;
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.action-btn:hover {
+    background-color: #386641;
+    transform: scale(1.08);
+}
+
+.action-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.action-count {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* Комментарии */
+.post-comments {
+    padding: 20px 30px 25px;
+    margin-top: 0;
+
+}
+
+.comment {
+    display: flex;
+    gap: 15px;
+    padding: 15px 0;
+}
+
+.comment-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.comment-content {
+    flex: 1;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #333;
+    font-size: 15px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.comment-text {
+    color: #555;
+    font-size: 15px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Стили для скроллинга */
+html {
+    scroll-behavior: smooth; /* Плавный скроллинг */
+}
+
+body {
+    overflow-y: scroll; /* Всегда показываем скроллбар для body чтобы не прыгал контент */
+    scrollbar-width: none; /* Скрываем скроллбар в Firefox */
+    -ms-overflow-style: none; /* Скрываем скроллбар в IE и Edge */
+}
+
+body::-webkit-scrollbar {
+    display: none; /* Скрываем скроллбар в WebKit браузерах */
+}
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+    .posts-container {
+        max-width: 1000px;
+    }
+}
+
+@media (max-width: 992px) {
+    .favorite-content {
+        padding: 30px 40px;
+    }
+    
+    .posts-container {
+        max-width: 800px;
+    }
+}
+
+@media (max-width: 768px) {
+    .favorite-content {
+        padding: 25px 20px;
+    }
+    
+    .posts-container {
+        max-width: 100%;
+    }
+    
+    .post-card {
+        border-radius: 15px;
+    }
+    
+    .post-header,
+    .post-content {
+        padding: 20px;
+    }
+    
+    .post-image img,
+    .placeholder-image {
+        min-height: 220px;
+        height: 220px;
+    }
+    
+    .post-actions {
+        gap: 15px;
+    }
+    
+    .action-btn {
+        padding: 8px 12px;
+    }
+    
+    .action-icon {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .favorite-header h1 {
+        font-size: 28px;
+    }
+    
+    .posts-grid {
+        gap: 20px;
+    }
+    
+    .post-header,
+    .post-content {
+        padding: 15px;
+    }
+    
+    .placeholder-image {
+        height: 180px;
+        font-size: 16px;
+    }
+}
