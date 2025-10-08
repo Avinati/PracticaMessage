@@ -1,93 +1,416 @@
-/* Profile.css */
+.main-content {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
 
-/* Основной контейнер профиля */
-.main-profile {
+
+.header-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
     display: flex;
-    justify-content: center;
-    padding: 20px;
-    background-color: #6A994E;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.main-profile {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    margin: 0;
+    padding: 30px 20px;
+    box-sizing: border-box;
 }
 
 .profile-content {
     display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    background-color: #A7C957;
+    height: 200px;
+    border-radius: 15px;
+    padding: 25px;
     align-items: center;
-    gap: 20px;
     width: 100%;
-    max-width: 800px;
+    max-width: 1200px;
+    margin: 0 auto 40px auto;
+    box-sizing: border-box;
 }
 
-/* Аватарка */
-.avatar-section img {
-    width: 80px;
-    height: 80px;
+.avaava {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+} 
+
+.avatar-section {
+    display: flex;
+    align-items: center;
+    text-align: left;
+    gap: 30px;
+} 
+
+.profile-text h3 {
+    margin: 0;
+    font-size: 28px;
+    color: #2D3A3A;
+}
+
+.profile-text p {
+    margin: 8px 0 0 0;
+    font-size: 20px;
+    color: #5A6B5B;
+}
+
+.profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.settings-btn, .chat-btn1 {
+    background: transparent;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
+.setting-buttn, .chat-btn1-img {
+    width: 55px;
+    height: 55px;
+    transition: transform 0.2s;
+}
+
+.setting-buttn:hover, .chat-btn1-img:hover {
+    transform: scale(1.1);
+}
+
+.content-wrapper {
+    display: flex;
+    gap: 30px;
+    width: 60%;
+    box-sizing: border-box;
+}
+
+.lenta-section, .friend-section {
+    flex: 1;
+    width: 100%;
+}
+
+.lenta-h2, .friend-h2 {
+    background-color: #6A994E;
+    border-radius: 10px;
+    padding: 18px 0;
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.lenta-h2 h2, .friend-h2 h2 {
+    margin: 0;
+    color: white;
+    font-size: 26px;
+    font-weight: bold;
+}
+
+.lenta, .friend-main {
+    background-color: #A7C957;
+    border-radius: 15px;
+    padding: 25px;
+    height: auto;
+    min-height: 550px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.header-lenta, .header-friend {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    width: 100%;
+}
+
+.left-lenta, .left-friend {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+    width: 100%;
+}
+
+.avaava2, .avaava-friend {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+} 
+
+.h2-lenta, .h2-friend {
+    margin: 0;
+    font-size: 20px;
+    color: #2D3A3A;
+    flex: 1;
+}
+
+.fav11, .fav-friend {
+    width: 35px;
+    height: 35px;
+    cursor: pointer;
+}
+
+.main-lenta, .main-friend {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 25px 0;
+    width: 100%;
+}
+
+.main-lenta img, .main-friend img {
+    max-width: 100%;
+    max-height: 450px;
+    border-radius: 10px;
+    object-fit: cover;
+    width: 100%;
+}
+
+.footer-lenta, .footer-friend {
+    display: flex;
+    margin-left: 340px;
+    gap: 35px;
+    margin-top: 25px;
+    width: 100%;
+}
+
+.footer-lenta img, .footer-friend img {
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.footer-lenta img:hover, .footer-friend img:hover {
+    transform: scale(1.1);
+}
+
+
+
+
+
+
+.content-wrapper {
+    display: flex;
+    gap: 30px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    justify-content: center;
+}
+
+.lenta-section, .friend-section {
+    flex: 0 1 600px;
+    width: 100%;
+}
+
+.friend-main {
+    background-color: #A7C957;
+    border-radius: 15px;
+    padding: 25px;
+    height: auto;
+    min-height: 550px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.friends-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.friend-item {
+    display: flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    gap: 15px;
+    transition: background-color 0.3s;
+}
+
+.friend-item:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.friend-avatar {
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     object-fit: cover;
 }
 
-/* Информация профиля в ряд */
-.profile-info {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.friend-info {
     flex: 1;
-    gap: 15px;
+    text-align: left;
 }
 
-.profile-text {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.profile-text h3 {
-    margin: 0;
+.friend-info h3 {
+    margin: 0 0 5px 0;
     font-size: 18px;
-    font-weight: 600;
+    color: #2D3A3A;
 }
 
-.profile-text p {
+.friend-info p {
     margin: 0;
-    color: #666;
     font-size: 14px;
+    color: #5A6B5B;
 }
 
-/* Кнопки действий */
-.profile-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.profile-actions button {
-    background: none;
+.message-friend-btn {
+    background: transparent;
     border: none;
     cursor: pointer;
-    padding: 8px;
-    border-radius: 5px;
-    transition: background-color 0.2s;
+    padding: 5px;
 }
 
-.profile-actions button:hover {
-    background-color: #f0f0f0;
+.message-friend-btn img {
+    width: 25px;
+    height: 25px;
+    transition: transform 0.2s;
 }
 
-.profile-actions button img {
-    width: 20px;
-    height: 20px;
-}
-
-/* Стили для header */
-.header-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-    padding: 10px 20px;
+.message-friend-btn img:hover {
+    transform: scale(1.1);
 }
 
 
+/* Злоебучий, затраханный мной, и нихуя не рабочий адаптив */
 
+@media (max-width: 1200px) {
+    .content-wrapper {
+        flex-direction: column;
+        gap: 40px;
+        align-items: center;
+    }
+    
+    .lenta-section, .friend-section {
+        flex: 1;
+        width: 100%;
+        max-width: 600px;
+    }
+}
 
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding: 0 15px;
+    }
+    
+    .lenta-section, .friend-section {
+        max-width: 100%;
+    }
+}
 
+@media (max-width: 480px) {
+    .friend-item {
+        padding: 12px;
+        gap: 12px;
+    }
+    
+    .friend-avatar {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .friend-info h3 {
+        font-size: 16px;
+    }
+    
+    .friend-info p {
+        font-size: 12px;
+    }
+}
 
+@media (max-width: 1200px) {
+    .content-wrapper {
+        flex-direction: column;
+        gap: 40px;
+    }
+    
+    .lenta-section, .friend-section {
+        width: 100%;
+    }
+    
+    .header-container,
+    .profile-content,
+    .content-wrapper,
+    .footer-container {
+        max-width: 100%;
+        padding: 0 30px;
+    }
+}
 
+@media (max-width: 768px) {
+    .main-profile {
+        padding: 20px 15px;
+    }
+    
+    .profile-content {
+        flex-direction: column;
+        height: auto;
+        gap: 25px;
+        padding: 20px;
+    }
+    
+    .avatar-section {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+    
+    .profile-actions {
+        flex-direction: row;
+        justify-content: center;
+        gap: 30px;
+    }
+    
+    .header-container {
+        flex-direction: column;
+        gap: 15px;
+        padding: 0 15px;
+    }
+    
+    .footer-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 30px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-text h3 {
+        font-size: 22px;
+    }
+    
+    .profile-text p {
+        font-size: 16px;
+    }
+    
+    .lenta-h2 h2, .friend-h2 h2 {
+        font-size: 22px;
+    }
+    
+    .lenta, .friend-main {
+        padding: 15px;
+        min-height: 400px;
+    }
+}
