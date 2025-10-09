@@ -1,9 +1,10 @@
+// Profile.jsx
 import React from "react";
-import Logo from '/public/Лого.png'
-import Fav from '/public/Fav.png'
-import Pfp from '/public/pfp.png'
-import './css/Profile.css'
-import { Link } from 'react-router-dom'
+import Logo from '/public/Лого.png';
+import Fav from '/public/Fav.png';
+import Pfp from '/public/pfp.png';
+import './css/Profile.css';
+import { Link } from 'react-router-dom';
 
 function Profile() {
     return (
@@ -29,96 +30,96 @@ function Profile() {
                 </div>
                 
                 <div className="main-profile">
-                    <div className="profile-content">
-                        <div className="avatar-section">
-                            <img className="avaava" src="./Аватарка.png" alt="Аватар" />
-                            <div className="profile-text">
+                    <div className="profile-hero">
+                        <div className="user-galaxy">
+                            <img className="avatar-cosmic" src="./Аватарка.png" alt="Аватар" />
+                            <div className="user-stardust">
                                 <h3>demons are a girl's best friend</h3>
                                 <p>@kabukiaku</p>
                             </div>
                         </div>
                         <div className="profile-info">
-                            <div className="profile-actions">
-                                <button className="settings-btn">
-                                    <img className="setting-buttn" src="./Настройки.png" alt="Настройки" />
+                            <div className="orbit-actions">
+                                <button className="quantum-settings">
+                                    <img className="settings-portal" src="./Настройки.png" alt="Настройки" />
                                 </button>
-                                <button className="chat-btn1">
-                                    <img className="chat-btn1-img" src="./chat1.png" alt="Чат" />
+                                <button className="nebula-chat">
+                                    <img className="chat-wormhole" src="./chat1.png" alt="Чат" />
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <div className="content-wrapper">
-                        <div className="lenta-section">
-                            <div className="lenta-h2">
+                    <div className="cosmic-grid">
+                        <div className="timeline-constellation">
+                            <div className="timeline-header">
                                 <h2>Лента</h2> 
                             </div>
                             
-                            <div className="lenta">
-                                <div className="header-lenta">
-                                    <div className="left-lenta">
-                                        <img className="avaava2" src="./Аватарка.png" alt="Аватар" />
-                                        <h2 className="h2-lenta">@vvandelo</h2>
-                                        <img className="fav11" src="./favpost1.png" alt="Избранное" />
+                            <div className="timeline-content">
+                                <div className="post-header">
+                                    <div className="post-identity">
+                                        <img className="avatar-nova" src="./Аватарка.png" alt="Аватар" />
+                                        <h2 className="username-pulsar">@vvandelo</h2>
+                                        <img className="star-favorite" src="./favpost1.png" alt="Избранное" />
                                     </div>
                                 </div>
-                                <div className="main-lenta">
-                                    <img src="./haha.png" alt="Пост" />
+                                <div className="post-universe">
+                                    <img className="post-supernova" src="./haha.png" alt="Пост" />
                                 </div>
-                                <div className="footer-lenta">
-                                    <img src="./like.png" alt="Лайк" />
-                                    <img src="./comm.png" alt="Комментарий" />
-                                    <img src="./share.png" alt="Поделиться" />
+                                <div className="post-actions">
+                                    <img className="action-meteor" src="./like.png" alt="Лайк" />
+                                    <img className="action-meteor" src="./comm.png" alt="Комментарий" />
+                                    <img className="action-meteor" src="./share.png" alt="Поделиться" />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="friend-section">
-                            <div className="friend-h2">
-                                <h2>Друзья</h2> 
+                        <div className="allies-constellation">
+                            <div className="allies-header">
+                                <h2>Союзники</h2> 
                             </div>
 
-                            <div className="friend-main">
-                                <div className="friends-list">
-                                    <div className="friend-item">
-                                        <img className="friend-avatar" src="./Аватарка.png" alt="Аватар друга" />
-                                        <div className="friend-info">
+                            <div className="allies-content">
+                                <div className="allies-cluster">
+                                    <div className="ally-comet">
+                                        <img className="avatar-satellite" src="./Аватарка.png" alt="Аватар союзника" />
+                                        <div className="ally-info">
                                             <h3>@friend_user1</h3>
                                             <p>Online</p>
                                         </div>
-                                        <button className="message-friend-btn">
-                                            <img src="./chat1.png" alt="Написать" />
+                                        <button className="message-stargate">
+                                            <img className="comet-message" src="./chat1.png" alt="Написать" />
                                         </button>
                                     </div>
-                                    <div className="friend-item">
-                                        <img className="friend-avatar" src="./Аватарка.png" alt="Аватар друга" />
-                                        <div className="friend-info">
+                                    <div className="ally-comet">
+                                        <img className="avatar-satellite" src="./Аватарка.png" alt="Аватар союзника" />
+                                        <div className="ally-info">
                                             <h3>@friend_user2</h3>
                                             <p>Был(а) 5 мин назад</p>
                                         </div>
-                                        <button className="message-friend-btn">
-                                            <img src="./chat1.png" alt="Написать" />
+                                        <button className="message-stargate">
+                                            <img className="comet-message" src="./chat1.png" alt="Написать" />
                                         </button>
                                     </div>
-                                    <div className="friend-item">
-                                        <img className="friend-avatar" src="./Аватарка.png" alt="Аватар друга" />
-                                        <div className="friend-info">
+                                    <div className="ally-comet">
+                                        <img className="avatar-satellite" src="./Аватарка.png" alt="Аватар союзника" />
+                                        <div className="ally-info">
                                             <h3>@friend_user3</h3>
                                             <p>Online</p>
                                         </div>
-                                        <button className="message-friend-btn">
-                                            <img src="./chat1.png" alt="Написать" />
+                                        <button className="message-stargate">
+                                            <img className="comet-message" src="./chat1.png" alt="Написать" />
                                         </button>
                                     </div>
-                                    <div className="friend-item">
-                                        <img className="friend-avatar" src="./Аватарка.png" alt="Аватар друга" />
-                                        <div className="friend-info">
+                                    <div className="ally-comet">
+                                        <img className="avatar-satellite" src="./Аватарка.png" alt="Аватар союзника" />
+                                        <div className="ally-info">
                                             <h3>@friend_user4</h3>
                                             <p>Был(а) 2 часа назад</p>
                                         </div>
-                                        <button className="message-friend-btn">
-                                            <img src="./chat1.png" alt="Написать" />
+                                        <button className="message-stargate">
+                                            <img className="comet-message" src="./chat1.png" alt="Написать" />
                                         </button>
                                     </div>
                                 </div>
@@ -136,7 +137,7 @@ function Profile() {
                                 <ul>Главная</ul>
                                 <ul>Избранное</ul>
                                 <ul>Профиль</ul>
-                                <ul>Друзья</ul>
+                                <ul>Союзники</ul>
                                 <ul>Настройки</ul>
                                 <ul>Чаты</ul>
                             </div>
