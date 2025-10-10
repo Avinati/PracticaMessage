@@ -9,14 +9,13 @@ const port = process.env.PORT || 5000;
 
 const { pool, checkConnection } = require('./db');
 
-// Middleware
 app.use(cors({
-  origin: 'http://localhost:3000', // URL вашего React приложения
+  origin: 'http://localhost:5173', 
   credentials: true
 }));
 app.use(express.json());
 
-// Middleware аутентификации
+
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -44,52 +43,25 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-// Импортируем роуты
-const authRoutes = require('./routes/authRoutes');
-const userRoutes = require('./routes/userRoutes');
 
-// Подключаем роуты
+const authRoutes = require('./routes/authRoutes')(pool, bcrypt, jwt, process.env.JWT_SECRET, authenticateToken);
+const userRoutes = require('./routes/userRoutes')(pool, authenticateToken); 
+
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
-// Базовый маршрут
-app.get('/', (req, res) => {
-  res.json({ message: '🚀 Сервер работает отлично!' });
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'API работает!' });
 });
 
-// Health check
-app.get('/health', async (req, res) => {
-  try {
-    const dbConnected = await checkConnection();
-    res.json({ 
-      status: 'OK', 
-      database: dbConnected ? 'Connected' : 'Disconnected',
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({ status: 'Error', error: error.message });
-  }
-});
 
-// Обработка 404
-app.use((req, res) => {
-  res.status(404).json({ 
-    error: 'Маршрут не найден',
-    path: req.originalUrl,
-    method: req.method
-  });
-});
-
-// Обработка ошибок
-app.use((error, req, res, next) => {
-  console.error('Ошибка сервера:', error);
-  res.status(500).json({ error: 'Внутренняя ошибка сервера' });
-});
-
-// Запуск сервера
 app.listen(port, async () => {
   console.log('🚀 Сервер запущен на порту: ' + port);
   await checkConnection();
+  console.log('✅ Маршруты зарегистрированы:');
+  console.log('   POST /api/auth/register');
+  console.log('   POST /api/auth/login');
+  console.log('   POST /api/users/profile');
+  console.log('   GET  /api/test');
 });
-
-module.exports = app;

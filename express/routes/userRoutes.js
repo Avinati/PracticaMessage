@@ -3,34 +3,35 @@ const express = require('express');
 const userRoutes = (pool, authenticateToken) => {
   const router = express.Router();
 
-  // Получение профиля текущего пользователя
-  router.get('/profile', authenticateToken, async (req, res) => {
+  
+  
+router.get('/profile', authenticateToken, async (req, res) => {
     try {
-      const [users] = await pool.execute(
-        `SELECT user_id, name, surname, nick, email, role, is_active, avatar_url, 
-                is_online, last_seen, created_at, updated_at 
-         FROM users WHERE user_id = ?`,
-        [req.user.user_id]
-      );
+        const [users] = await pool.execute(
+            `SELECT user_id, name, surname, nick, email, role, is_active, avatar_url, 
+                    is_online, last_seen, created_at, updated_at 
+             FROM users WHERE user_id = ?`,
+            [req.user.user_id]
+        );
 
-      if (users.length === 0) {
-        return res.status(404).json({ error: 'Пользователь не найден' });
-      }
+        if (users.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
 
-      res.json({ user: users[0] });
+        res.json({ user: users[0] });
     } catch (error) {
-      console.error('Profile error:', error);
-      res.status(500).json({ error: 'Ошибка получения профиля' });
+        console.error('Profile error:', error);
+        res.status(500).json({ error: 'Ошибка получения профиля' });
     }
-  });
+});
 
-  // Обновление профиля
+  
   router.put('/profile', authenticateToken, async (req, res) => {
     try {
       const { name, surname, nick, avatar_url } = req.body;
       const userId = req.user.user_id;
 
-      // Проверка ника на уникальность
+     
       if (nick && nick !== req.user.nick) {
         const [existingNicks] = await pool.execute(
           'SELECT user_id FROM users WHERE nick = ? AND user_id != ?',
@@ -55,7 +56,7 @@ const userRoutes = (pool, authenticateToken) => {
         ]
       );
 
-      // Получаем обновленные данные
+      
       const [users] = await pool.execute(
         `SELECT user_id, name, surname, nick, email, role, is_active, avatar_url, 
                 is_online, last_seen, created_at, updated_at 
@@ -73,7 +74,7 @@ const userRoutes = (pool, authenticateToken) => {
     }
   });
 
-  // Поиск пользователей
+  
   router.get('/search', authenticateToken, async (req, res) => {
     try {
       const { query } = req.query;

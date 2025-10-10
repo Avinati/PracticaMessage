@@ -189,16 +189,7 @@ function Register() {
                         />
                     </div>
                     
-                    <div className="input-group">
-                        <input 
-                            placeholder="URL аватара (необязательно)" 
-                            type="url" 
-                            className="input-field" 
-                            name="avatar_url"
-                            value={formData.avatar_url}
-                            onChange={handleInputChange}
-                        />
-                    </div>
+                    
                     
                     <div className="checkbox-group">
                         <label className="checkbox-label">

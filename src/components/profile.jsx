@@ -1,5 +1,5 @@
-// Profile.jsx
-import React from "react";
+
+import React, { useState, useEffect } from "react";
 import Logo from '/public/Лого.png';
 import Fav from '/public/Fav.png';
 import Pfp from '/public/pfp.png';
@@ -7,6 +7,67 @@ import './css/Profile.css';
 import { Link } from 'react-router-dom';    
 
 function Profile() {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchUserProfile();
+    }, []);
+
+    const fetchUserProfile = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Пользователь не авторизован');
+            }
+
+            const response = await fetch('http://localhost:5000/api/users/profile', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки профиля');
+            }
+
+            const data = await response.json();
+            setUser(data.user);
+        } catch (err) {
+            setError(err.message);
+            console.error('Ошибка загрузки профиля:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="main-content">
+                <div className="loading">Загрузка профиля...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="main-content">
+                <div className="error">Ошибка: {error}</div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="main-content">
+                <div className="error">Пользователь не найден</div>
+            </div>
+        );
+    }
+
     return (
         <>
             <div className="main-content">
@@ -32,23 +93,33 @@ function Profile() {
                 <div className="main-profile">
                     <div className="profile-hero">
                         <div className="user-galaxy">
-                            <img className="avatar-cosmic" src="./Аватарка.png" alt="Аватар" />
+                            <img 
+                                className="avatar-cosmic" 
+                                src={user.avatar_url || "./Аватарка.png"} 
+                                alt="Аватар" 
+                                onError={(e) => {
+                                    e.target.src = "./Аватарка.png";
+                                }}
+                            />
                             <div className="user-stardust">
-                                <h3>demons are a girl's best friend</h3>
-                                <p>@kabukiaku</p> 
+                                <h3>{user.name} {user.surname}</h3>
+                                <p>@{user.nick || user.email.split('@')[0]}</p>
+                                <p className="user-status">
+                                    {user.is_online ? 'Online' : `Был(а) ${formatLastSeen(user.last_seen)}`}
+                                </p>
                             </div>
                         </div>
                         <div className="profile-info">
                             <div className="orbit-actions">
                                 <Link to='/settings'>
-                                <button className="quantum-settings">
-                                    <img className="settings-portal" src="./Настройки.png" alt="Настройки" />
-                                </button>
+                                    <button className="quantum-settings">
+                                        <img className="settings-portal" src="./Настройки.png" alt="Настройки" />
+                                    </button>
                                 </Link>
                                 <Link to='/upload'>
-                                <button className="nebula-chat">
-                                    <img className="chat-wormhole" src="./chat1.png" alt="Чат" />
-                                </button>
+                                    <button className="nebula-chat">
+                                        <img className="chat-wormhole" src="./chat1.png" alt="Чат" />
+                                    </button>
                                 </Link>
                             </div>
                         </div>
@@ -63,8 +134,15 @@ function Profile() {
                             <div className="timeline-content">
                                 <div className="post-header">
                                     <div className="post-identity">
-                                        <img className="avatar-nova" src="./Аватарка.png" alt="Аватар" />
-                                        <h2 className="username-pulsar">@vvandelo</h2>
+                                        <img 
+                                            className="avatar-nova" 
+                                            src={user.avatar_url || "./Аватарка.png"} 
+                                            alt="Аватар"
+                                            onError={(e) => {
+                                                e.target.src = "./Аватарка.png";
+                                            }}
+                                        />
+                                        <h2 className="username-pulsar">@{user.nick || user.email.split('@')[0]}</h2>
                                         <img className="star-favorite" src="./favpost1.png" alt="Избранное" />
                                     </div>
                                 </div>
@@ -87,40 +165,17 @@ function Profile() {
                             <div className="allies-content">
                                 <div className="allies-cluster">
                                     <div className="ally-comet">
-                                        <img className="avatar-satellite" src="./Аватарка.png" alt="Аватар союзника" />
+                                        <img 
+                                            className="avatar-satellite" 
+                                            src={user.avatar_url || "./Аватарка.png"} 
+                                            alt="Аватар союзника"
+                                            onError={(e) => {
+                                                e.target.src = "./Аватарка.png";
+                                            }}
+                                        />
                                         <div className="ally-info">
-                                            <h3>@friend_user1</h3>
-                                            <p>Online</p>
-                                        </div>
-                                        <button className="message-stargate">
-                                            <img className="comet-message" src="./chat1.png" alt="Написать" />
-                                        </button>
-                                    </div>
-                                    <div className="ally-comet">
-                                        <img className="avatar-satellite" src="./Аватарка.png" alt="Аватар союзника" />
-                                        <div className="ally-info">
-                                            <h3>@friend_user2</h3>
-                                            <p>Был(а) 5 мин назад</p>
-                                        </div>
-                                        <button className="message-stargate">
-                                            <img className="comet-message" src="./chat1.png" alt="Написать" />
-                                        </button>
-                                    </div>
-                                    <div className="ally-comet">
-                                        <img className="avatar-satellite" src="./Аватарка.png" alt="Аватар союзника" />
-                                        <div className="ally-info">
-                                            <h3>@friend_user3</h3>
-                                            <p>Online</p>
-                                        </div>
-                                        <button className="message-stargate">
-                                            <img className="comet-message" src="./chat1.png" alt="Написать" />
-                                        </button>
-                                    </div>
-                                    <div className="ally-comet">
-                                        <img className="avatar-satellite" src="./Аватарка.png" alt="Аватар союзника" />
-                                        <div className="ally-info">
-                                            <h3>@friend_user4</h3>
-                                            <p>Был(а) 2 часа назад</p>
+                                            <h3>@{user.nick || user.email.split('@')[0]}</h3>
+                                            <p>{user.is_online ? 'Online' : `Был(а) ${formatLastSeen(user.last_seen)}`}</p>
                                         </div>
                                         <button className="message-stargate">
                                             <img className="comet-message" src="./chat1.png" alt="Написать" />
@@ -158,7 +213,25 @@ function Profile() {
                 </div>
             </div>
         </>
-    )
+    );
+}
+
+
+function formatLastSeen(lastSeen) {
+    if (!lastSeen) return 'недавно';
+    
+    const now = new Date();
+    const lastSeenDate = new Date(lastSeen);
+    const diffInMinutes = Math.floor((now - lastSeenDate) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'только что';
+    if (diffInMinutes < 60) return `${diffInMinutes} мин назад`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} ч назад`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} дн назад`;
 }
 
 export default Profile;

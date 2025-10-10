@@ -3,12 +3,12 @@ const express = require('express');
 const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
   const router = express.Router();
 
-  // Регистрация
+  
   router.post('/register', async (req, res) => {
     try {
       const { name, surname, nick, email, password, avatar_url } = req.body;
 
-      // Валидация
+      
       if (!name || !email || !password) {
         return res.status(400).json({ 
           error: 'Обязательные поля: имя, email и пароль' 
@@ -27,7 +27,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
         });
       }
 
-      // Проверка существующего email
+      
       const [existingUsers] = await pool.execute(
         'SELECT user_id FROM users WHERE email = ?',
         [email]
@@ -39,7 +39,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
         });
       }
 
-      // Проверка ника если указан
+      
       if (nick) {
         const [existingNicks] = await pool.execute(
           'SELECT user_id FROM users WHERE nick = ?',
@@ -53,17 +53,17 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
         }
       }
 
-      // Хеширование пароля
+      
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      // Создание пользователя
+      
       const [result] = await pool.execute(
         `INSERT INTO users (name, surname, nick, email, password, avatar_url) 
          VALUES (?, ?, ?, ?, ?, ?)`,
         [name, surname || null, nick || null, email, hashedPassword, avatar_url || null]
       );
 
-      // Получение созданного пользователя
+      
       const [users] = await pool.execute(
         `SELECT user_id, name, surname, nick, email, role, is_active, avatar_url, 
                 is_online, last_seen, created_at, updated_at 
@@ -71,14 +71,14 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
         [result.insertId]
       );
 
-      // Генерация токена
+      
       const token = jwt.sign(
         { userId: result.insertId, email: email },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
 
-      // Обновление статуса онлайн
+      
       await pool.execute(
         'UPDATE users SET is_online = TRUE WHERE user_id = ?',
         [result.insertId]
@@ -98,7 +98,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
     }
   });
 
-  // Логин
+  
   router.post('/login', async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -164,7 +164,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
     }
   });
 
-  // Выход
+  
   router.post('/logout', authenticateToken, async (req, res) => {
     try {
       await pool.execute(
@@ -183,7 +183,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
     }
   });
 
-  // Проверка токена
+  
   router.get('/verify', authenticateToken, (req, res) => {
     res.json({ 
       user: req.user,
@@ -191,7 +191,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
     });
   });
 
-  // Вспомогательная функция валидации email
+  
   function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);

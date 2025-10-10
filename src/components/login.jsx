@@ -96,15 +96,7 @@ function Login() {
                         />
                     </div>
                     
-                    <div className="forgot-password">
-                        <button 
-                            type="button" 
-                            className="forgot-link"
-                            onClick={handleForgotPassword}
-                        >
-                            Забыли пароль?
-                        </button>
-                    </div>
+                    
                     
                     <button 
                         type="submit" 
