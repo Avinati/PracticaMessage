@@ -1,0 +1,81 @@
+.upload-main-lol
+{
+    background-color: #A7C957;
+    padding-top: 30px;
+    padding-left: 100px;
+    margin: 100px;
+    border-radius: 10px;
+}
+
+.textarr
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 95%;
+    height: 500px;
+    border: none;
+    border-radius: 8px;
+    padding: 15px;
+    font-size: 16px;
+    resize: vertical;
+    margin-bottom: 20px;
+}
+
+.btnn-use
+{
+    margin-top: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 100px;
+    padding-bottom: 30px;
+}
+
+.btn-add-media {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: transparent;
+    border: 2px dashed #386641;
+    color: #386641;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-add-media:hover {
+    background-color: rgba(56, 102, 65, 0.1);
+}
+
+.btn-group {
+    display: flex;
+    gap: 15px;
+}
+
+.btn-cancel {
+    background-color: #386641;
+    border: 2px solid #386641;
+    color: white;
+    padding: 10px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+
+
+.btn-submit {
+    background-color: #386641;
+    border: 2px solid #386641;
+    color: white;
+    padding: 10px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}

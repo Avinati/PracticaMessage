@@ -4,7 +4,7 @@ import Logo from '/public/Лого.png';
 import Fav from '/public/Fav.png';
 import Pfp from '/public/pfp.png';
 import './css/Profile.css';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';    
 
 function Profile() {
     return (
@@ -35,17 +35,21 @@ function Profile() {
                             <img className="avatar-cosmic" src="./Аватарка.png" alt="Аватар" />
                             <div className="user-stardust">
                                 <h3>demons are a girl's best friend</h3>
-                                <p>@kabukiaku</p>
+                                <p>@kabukiaku</p> 
                             </div>
                         </div>
                         <div className="profile-info">
                             <div className="orbit-actions">
+                                <Link to='/settings'>
                                 <button className="quantum-settings">
                                     <img className="settings-portal" src="./Настройки.png" alt="Настройки" />
                                 </button>
+                                </Link>
+                                <Link to='/upload'>
                                 <button className="nebula-chat">
                                     <img className="chat-wormhole" src="./chat1.png" alt="Чат" />
                                 </button>
+                                </Link>
                             </div>
                         </div>
                     </div>

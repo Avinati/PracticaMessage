@@ -1,4 +1,3 @@
-
 import React from "react";
 import Logo from '/public/Лого.png'
 import Fav from '/public/Fav.png'
@@ -9,6 +8,7 @@ import Like from '/public/like.png'
 import Comm from '/public/comm.png'
 import Share from '/public/share.png'
 import FavPost from '/public/favpost1.png'
+import '../components/css/upload.css'
 
 function PostUpload() {
     return (
@@ -32,7 +32,19 @@ function PostUpload() {
                             </div>
                         </div>
 
-                          {/* Main */}
+                        <div className="upload-main-lol">
+                            <textarea className="textarr" name="" id="" placeholder="Ваш текст"></textarea>
+                            <div className="btnn-use">
+                                <button className="btn-add-media"> 
+                                    <img src="../plus.png" alt="" /> 
+                                    Добавить медиа 
+                                </button>
+                                <div className="btn-group">
+                                    <button className="btn-cancel">Отменить</button>
+                                    <button className="btn-submit">Выложить</button>
+                                </div>
+                            </div>
+                        </div>
 
                         <div className="footer-box">
                                             <div className="footer-container">
