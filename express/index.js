@@ -9,12 +9,16 @@ const port = process.env.PORT || 5000;
 
 const { pool, checkConnection } = require('./db');
 
+// ДОБАВЬТЕ ЭТИ MIDDLEWARE ПЕРВЫМИ
 app.use(cors({
   origin: 'http://localhost:5173', 
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
-app.use(express.json());
 
+app.use(express.json()); // ДЛЯ ПАРСИНГА JSON
+app.use(express.urlencoded({ extended: true })); // ДЛЯ ПАРСИНГА URL-ENCODED
 
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -43,10 +47,8 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-
 const authRoutes = require('./routes/authRoutes')(pool, bcrypt, jwt, process.env.JWT_SECRET, authenticateToken);
 const userRoutes = require('./routes/userRoutes')(pool, authenticateToken); 
-
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -55,6 +57,14 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'API работает!' });
 });
 
+// Тестовый endpoint для проверки парсинга body
+app.post('/api/test-body', (req, res) => {
+  console.log('Test body:', req.body);
+  res.json({ 
+    message: 'Body received',
+    body: req.body 
+  });
+});
 
 app.listen(port, async () => {
   console.log('🚀 Сервер запущен на порту: ' + port);
@@ -62,6 +72,7 @@ app.listen(port, async () => {
   console.log('✅ Маршруты зарегистрированы:');
   console.log('   POST /api/auth/register');
   console.log('   POST /api/auth/login');
-  console.log('   POST /api/users/profile');
+  console.log('   POST /api/users/posts');
   console.log('   GET  /api/test');
+  console.log('   POST /api/test-body');
 });

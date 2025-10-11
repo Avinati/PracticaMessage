@@ -9,7 +9,7 @@ function Login() {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const navigate = useNavigate();
+    const navigate = useNavigate(); // Добавлены скобки ()
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -35,16 +35,22 @@ function Login() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                'Accept': 'application/json'
                 },
                 body: JSON.stringify(formData)
             });
 
             const data = await response.json();
 
+            console.log('Ответ сервера:', data); // Для отладки
+
             if (response.ok) {
                 // Сохраняем токен и данные пользователя
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
+                
+                console.log('Токен сохранен:', data.token);
+                console.log('Данные пользователя:', data.user);
                 
                 // Перенаправляем в профиль
                 navigate('/profile');
@@ -81,6 +87,7 @@ function Login() {
                             value={formData.email}
                             onChange={handleInputChange}
                             required
+                            disabled={loading}
                         />
                     </div>
                     
@@ -93,10 +100,20 @@ function Login() {
                             value={formData.password}
                             onChange={handleInputChange}
                             required
+                            disabled={loading}
                         />
                     </div>
                     
-                    
+                    <div className="forgot-password">
+                        <button 
+                            type="button" 
+                            className="forgot-link"
+                            onClick={handleForgotPassword}
+                            disabled={loading}
+                        >
+                            Забыли пароль?
+                        </button>
+                    </div>
                     
                     <button 
                         type="submit" 
