@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Logo from '/public/Лого.png';
 import Fav from '/public/Fav.png';
@@ -91,7 +90,21 @@ function Profile() {
                 </div>
                 
                 <div className="main-profile">
-                    <div className="profile-hero">
+                    {/* Обновленный profile-hero с фоном */}
+                    <div 
+                        className="profile-hero"
+                        style={{
+                            backgroundImage: user.cover_url ? `url(${user.cover_url})` : 'none',
+                            backgroundColor: user.cover_url ? 'transparent' : '#A7C957',
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                            position: 'relative'
+                        }}
+                    >
+                        {/* Затемнение для лучшей читаемости текста поверх фона */}
+                        <div className="profile-hero-overlay"></div>
+                        
                         <div className="user-galaxy">
                             <img 
                                 className="avatar-cosmic" 
@@ -215,7 +228,6 @@ function Profile() {
         </>
     );
 }
-
 
 function formatLastSeen(lastSeen) {
     if (!lastSeen) return 'недавно';

@@ -12,7 +12,7 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    background-color: #A7C957;
+    background-color: #A7C957; /* Фолбэк цвет если нет обложки */
     height: 200px;
     border-radius: 15px;
     padding: 25px;
@@ -21,7 +21,24 @@
     max-width: 1200px;
     margin: 0 auto 40px auto;
     box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
 } 
+
+.profile-hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(0, 0, 0, 0.2) 0%,
+        rgba(0, 0, 0, 0.1) 50%,
+        rgba(0, 0, 0, 0.2) 100%
+    );
+    z-index: 1;
+}
 
 .avatar-cosmic {
     width: 150px;

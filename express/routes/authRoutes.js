@@ -3,12 +3,12 @@ const express = require('express');
 const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
   const router = express.Router();
 
-  
+  // Регистрация пользователя
   router.post('/register', async (req, res) => {
     try {
       const { name, surname, nick, email, password, avatar_url } = req.body;
 
-      
+      // Валидация
       if (!name || !email || !password) {
         return res.status(400).json({ 
           error: 'Обязательные поля: имя, email и пароль' 
@@ -27,7 +27,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
         });
       }
 
-      
+      // Проверяем существование пользователя по email
       const [existingUsers] = await pool.execute(
         'SELECT user_id FROM users WHERE email = ?',
         [email]
@@ -39,7 +39,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
         });
       }
 
-      
+      // Проверяем никнейм если он указан
       if (nick) {
         const [existingNicks] = await pool.execute(
           'SELECT user_id FROM users WHERE nick = ?',
@@ -53,32 +53,32 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
         }
       }
 
-      
+      // Хешируем пароль
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      
+      // Создаем пользователя
       const [result] = await pool.execute(
         `INSERT INTO users (name, surname, nick, email, password, avatar_url) 
          VALUES (?, ?, ?, ?, ?, ?)`,
         [name, surname || null, nick || null, email, hashedPassword, avatar_url || null]
       );
 
-      
+      // Получаем созданного пользователя
       const [users] = await pool.execute(
-        `SELECT user_id, name, surname, nick, email, role, is_active, avatar_url, 
+        `SELECT user_id, name, surname, nick, email, role, is_active, avatar_url, cover_url,
                 is_online, last_seen, created_at, updated_at 
          FROM users WHERE user_id = ?`,
         [result.insertId]
       );
 
-      
+      // Генерируем JWT токен
       const token = jwt.sign(
         { userId: result.insertId, email: email },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
 
-      
+      // Устанавливаем статус онлайн
       await pool.execute(
         'UPDATE users SET is_online = TRUE WHERE user_id = ?',
         [result.insertId]
@@ -98,7 +98,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
     }
   });
 
-  
+  // Вход пользователя
   router.post('/login', async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -111,7 +111,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
 
       const [users] = await pool.execute(
         `SELECT user_id, name, surname, nick, email, password, role, 
-                is_active, avatar_url, is_online 
+                is_active, avatar_url, cover_url, is_online 
          FROM users WHERE email = ?`,
         [email]
       );
@@ -143,11 +143,13 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
         { expiresIn: '24h' }
       );
 
+      // Обновляем статус онлайн
       await pool.execute(
         'UPDATE users SET is_online = TRUE, last_seen = CURRENT_TIMESTAMP WHERE user_id = ?',
         [user.user_id]
       );
 
+      // Убираем пароль из ответа
       const { password: _, ...userWithoutPassword } = user;
 
       res.json({
@@ -164,7 +166,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
     }
   });
 
-  
+  // Выход пользователя
   router.post('/logout', authenticateToken, async (req, res) => {
     try {
       await pool.execute(
@@ -183,7 +185,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
     }
   });
 
-  
+  // Проверка токена
   router.get('/verify', authenticateToken, (req, res) => {
     res.json({ 
       user: req.user,
@@ -191,7 +193,7 @@ const authRoutes = (pool, bcrypt, jwt, JWT_SECRET, authenticateToken) => {
     });
   });
 
-  
+  // Валидация email
   function validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);

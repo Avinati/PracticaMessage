@@ -80,6 +80,7 @@ html, body
     width: 76px;
     height: 80px;
     display: block;
+    border-radius: 50%;
 }
 
 .fav-btn {

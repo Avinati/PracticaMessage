@@ -17,12 +17,17 @@ function Settings() {
         nick: '',
         email: '',
         birthDate: '',
-        avatar_url: ''
+        avatar_url: '',
+        cover_url: ''
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [authChecked, setAuthChecked] = useState(false);
+    const [uploading, setUploading] = useState({
+        avatar: false,
+        cover: false
+    });
 
     // Проверка аутентификации при загрузке компонента
     useEffect(() => {
@@ -89,8 +94,9 @@ function Settings() {
                     surname: data.user.surname || '',
                     nick: data.user.nick || '',
                     email: data.user.email || '',
-                    birthDate: '',
-                    avatar_url: data.user.avatar_url || Pfp
+                    birthDate: data.user.birthDate || '',
+                    avatar_url: data.user.avatar_url || Pfp,
+                    cover_url: data.user.cover_url || ''
                 });
             } else if (response.status === 401) {
                 setIsAuthenticated(false);
@@ -100,6 +106,147 @@ function Settings() {
         } catch (error) {
             console.error('Ошибка при загрузке профиля:', error);
             setMessage('Ошибка при загрузке профиля');
+        }
+    };
+
+    // Загрузка файла на сервер
+    const uploadFile = async (file, type) => {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', type);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/users/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки файла');
+            }
+
+            const data = await response.json();
+            return data.fileUrl;
+        } catch (error) {
+            console.error('Ошибка загрузки:', error);
+            throw error;
+        }
+    };
+
+    // Обновление URL аватара или обложки в профиле
+    const updateProfileImage = async (imageUrl, field) => {
+        const token = localStorage.getItem('token');
+        
+        try {
+            const response = await fetch('http://localhost:5000/api/users/profile', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    [field]: imageUrl
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка обновления профиля');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Ошибка обновления:', error);
+            throw error;
+        }
+    };
+
+    // Загрузка аватара
+    const handleAvatarChange = async (event) => {
+        if (!isAuthenticated) {
+            alert('Войдите в аккаунт чтобы изменить аватар');
+            navigate('/login');
+            return;
+        }
+
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Проверка типа файла
+        if (!file.type.startsWith('image/')) {
+            setMessage('Пожалуйста, выберите изображение');
+            return;
+        }
+
+        // Проверка размера файла (макс 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            setMessage('Размер файла не должен превышать 5MB');
+            return;
+        }
+
+        setUploading(prev => ({ ...prev, avatar: true }));
+        setMessage('');
+
+        try {
+            // Загружаем файл
+            const fileUrl = await uploadFile(file, 'avatar');
+            
+            // Обновляем профиль
+            await updateProfileImage(fileUrl, 'avatar_url');
+            
+            // Обновляем состояние
+            setUserData(prev => ({ ...prev, avatar_url: fileUrl }));
+            setMessage('Аватар успешно обновлен!');
+            
+        } catch (error) {
+            console.error('Ошибка загрузки аватара:', error);
+            setMessage('Ошибка при загрузке аватара');
+        } finally {
+            setUploading(prev => ({ ...prev, avatar: false }));
+            event.target.value = ''; // Сбрасываем input
+        }
+    };
+
+    // Загрузка обложки
+    const handleCoverChange = async (event) => {
+        if (!isAuthenticated) {
+            alert('Войдите в аккаунт чтобы изменить обложку');
+            navigate('/login');
+            return;
+        }
+
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            setMessage('Пожалуйста, выберите изображение');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            setMessage('Размер файла не должен превышать 5MB');
+            return;
+        }
+
+        setUploading(prev => ({ ...prev, cover: true }));
+        setMessage('');
+
+        try {
+            const fileUrl = await uploadFile(file, 'cover');
+            await updateProfileImage(fileUrl, 'cover_url');
+            
+            setUserData(prev => ({ ...prev, cover_url: fileUrl }));
+            setMessage('Обложка успешно обновлена!');
+            
+        } catch (error) {
+            console.error('Ошибка загрузки обложки:', error);
+            setMessage('Ошибка при загрузке обложки');
+        } finally {
+            setUploading(prev => ({ ...prev, cover: false }));
+            event.target.value = '';
         }
     };
 
@@ -126,7 +273,8 @@ function Settings() {
                     name: userData.name,
                     surname: userData.surname,
                     nick: userData.nick,
-                    avatar_url: userData.avatar_url
+                    avatar_url: userData.avatar_url,
+                    cover_url: userData.cover_url
                 })
             });
 
@@ -210,26 +358,6 @@ function Settings() {
             ...prev,
             [field]: value
         }));
-    };
-
-    // Загрузка аватара
-    const handleAvatarChange = () => {
-        if (!isAuthenticated) {
-            alert('Войдите в аккаунт чтобы изменить аватар');
-            navigate('/login');
-            return;
-        }
-        alert('Функция загрузки аватара будет реализована позже');
-    };
-
-    // Загрузка обложки
-    const handleCoverChange = () => {
-        if (!isAuthenticated) {
-            alert('Войдите в аккаунт чтобы изменить обложку');
-            navigate('/login');
-            return;
-        }
-        alert('Функция загрузки обложки будет реализована позже');
     };
 
     // Обработчик клика по кнопке профиля
@@ -325,7 +453,13 @@ function Settings() {
                     )}
 
                     <div className="profile-header">
-                        <div className="cover-photo">
+                        <div 
+                            className="cover-photo"
+                            style={{
+                                backgroundImage: userData.cover_url ? `url(${userData.cover_url})` : 'none',
+                                backgroundColor: userData.cover_url ? 'transparent' : '#f0f0f0'
+                            }}
+                        >
                             <div className="avatar-section">
                                 <img 
                                     src={isAuthenticated ? (userData.avatar_url || Pfp) : Pfp} 
@@ -336,20 +470,38 @@ function Settings() {
                                     @{isAuthenticated ? (userData.nick || 'username') : 'guest'}
                                 </h2>
                                 <div className="photo-buttons">
-                                    <button 
-                                        className="change-btn" 
-                                        onClick={handleAvatarChange}
-                                        disabled={loading || !isAuthenticated}
-                                    >
-                                        {loading ? 'Загрузка...' : 'Изменить аватар'}
-                                    </button>
-                                    <button 
-                                        className="change-btn" 
-                                        onClick={handleCoverChange}
-                                        disabled={loading || !isAuthenticated}
-                                    >
-                                        Изменить обложку
-                                    </button>
+                                    <div className="file-input-wrapper">
+                                        <input 
+                                            type="file"
+                                            id="avatar-upload"
+                                            accept="image/*"
+                                            onChange={handleAvatarChange}
+                                            disabled={uploading.avatar || !isAuthenticated}
+                                            style={{ display: 'none' }}
+                                        />
+                                        <label 
+                                            htmlFor="avatar-upload" 
+                                            className="change-btn"
+                                        >
+                                            {uploading.avatar ? 'Загрузка...' : 'Изменить аватар'}
+                                        </label>
+                                    </div>
+                                    <div className="file-input-wrapper">
+                                        <input 
+                                            type="file"
+                                            id="cover-upload"
+                                            accept="image/*"
+                                            onChange={handleCoverChange}
+                                            disabled={uploading.cover || !isAuthenticated}
+                                            style={{ display: 'none' }}
+                                        />
+                                        <label 
+                                            htmlFor="cover-upload" 
+                                            className="change-btn"
+                                        >
+                                            {uploading.cover ? 'Загрузка...' : 'Изменить обложку'}
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>

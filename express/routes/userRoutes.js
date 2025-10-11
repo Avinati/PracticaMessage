@@ -1,14 +1,16 @@
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 
-const userRoutes = (pool, authenticateToken) => {
+const userRoutes = (pool, authenticateToken, upload) => {
   const router = express.Router();
 
   // Получение профиля пользователя
   router.get('/profile', authenticateToken, async (req, res) => {
     try {
       const [users] = await pool.execute(
-        `SELECT user_id, name, surname, nick, email, role, is_active, avatar_url, 
-                is_online, last_seen, created_at, updated_at 
+        `SELECT user_id, name, surname, nick, email, role, is_active, 
+                avatar_url, cover_url, is_online, last_seen, created_at, updated_at 
          FROM users WHERE user_id = ?`,
         [req.user.user_id]
       );
@@ -27,7 +29,7 @@ const userRoutes = (pool, authenticateToken) => {
   // Обновление профиля пользователя
   router.put('/profile', authenticateToken, async (req, res) => {
     try {
-      const { name, surname, nick, avatar_url } = req.body;
+      const { name, surname, nick, avatar_url, cover_url } = req.body;
       const userId = req.user.user_id;
 
       // Проверка уникальности никнейма
@@ -44,21 +46,23 @@ const userRoutes = (pool, authenticateToken) => {
 
       await pool.execute(
         `UPDATE users 
-         SET name = ?, surname = ?, nick = ?, avatar_url = ?, updated_at = CURRENT_TIMESTAMP 
+         SET name = ?, surname = ?, nick = ?, 
+             avatar_url = ?, cover_url = ?, updated_at = CURRENT_TIMESTAMP 
          WHERE user_id = ?`,
         [
           name || req.user.name, 
           surname !== undefined ? surname : req.user.surname,
           nick || req.user.nick, 
-          avatar_url !== undefined ? avatar_url : req.user.avatar_url, 
+          avatar_url !== undefined ? avatar_url : req.user.avatar_url,
+          cover_url !== undefined ? cover_url : req.user.cover_url,
           userId
         ]
       );
 
       // Получаем обновленные данные
       const [users] = await pool.execute(
-        `SELECT user_id, name, surname, nick, email, role, is_active, avatar_url, 
-                is_online, last_seen, created_at, updated_at 
+        `SELECT user_id, name, surname, nick, email, role, is_active, 
+                avatar_url, cover_url, is_online, last_seen, created_at, updated_at 
          FROM users WHERE user_id = ?`,
         [userId]
       );
@@ -70,6 +74,27 @@ const userRoutes = (pool, authenticateToken) => {
     } catch (error) {
       console.error('Update profile error:', error);
       res.status(500).json({ error: 'Ошибка обновления профиля' });
+    }
+  });
+
+  // Загрузка файлов (аватар/обложка)
+  router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'Файл не загружен' });
+      }
+
+      // Формируем URL файла
+      const fileUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+
+      res.json({
+        message: 'Файл успешно загружен',
+        fileUrl: fileUrl,
+        filename: req.file.filename
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      res.status(500).json({ error: 'Ошибка загрузки файла' });
     }
   });
 
@@ -104,7 +129,7 @@ const userRoutes = (pool, authenticateToken) => {
 
       const searchQuery = `%${query}%`;
       const [users] = await pool.execute(
-        `SELECT user_id, name, surname, nick, avatar_url, is_online, last_seen 
+        `SELECT user_id, name, surname, nick, avatar_url, cover_url, is_online, last_seen 
          FROM users 
          WHERE (name LIKE ? OR surname LIKE ? OR nick LIKE ?) 
          AND user_id != ? 
@@ -120,13 +145,12 @@ const userRoutes = (pool, authenticateToken) => {
     }
   });
 
-
- router.post('/posts', authenticateToken, async (req, res) => {
+  // Создание поста
+  router.post('/posts', authenticateToken, async (req, res) => {
     console.log('=== СОЗДАНИЕ ПОСТА ===');
     console.log('Body received:', req.body);
     
     try {
-      // Проверяем, что body существует
       if (!req.body) {
         console.log('ERROR: req.body is undefined');
         return res.status(400).json({ error: 'Тело запроса отсутствует' });
@@ -167,7 +191,7 @@ const userRoutes = (pool, authenticateToken) => {
     }
   });
 
-  // ПОЛУЧЕНИЕ ЛЕНТЫ ПОСТОВ
+  // Получение ленты постов
   router.get('/posts/feed', authenticateToken, async (req, res) => {
     try {
       const userId = req.user.user_id;
@@ -175,7 +199,7 @@ const userRoutes = (pool, authenticateToken) => {
       // Получаем посты пользователя и его друзей
       const [posts] = await pool.execute(
         `SELECT p.*, 
-                u.name, u.surname, u.nick, u.avatar_url,
+                u.name, u.surname, u.nick, u.avatar_url, u.cover_url,
                 (SELECT COUNT(*) FROM post_likes WHERE post_id = p.post_id) as likes_count,
                 (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comments_count,
                 EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.post_id AND user_id = ?) as is_liked
@@ -199,7 +223,7 @@ const userRoutes = (pool, authenticateToken) => {
     }
   });
 
-  // ЛАЙК ПОСТА
+  // Лайк поста
   router.post('/posts/:postId/like', authenticateToken, async (req, res) => {
     try {
       const { postId } = req.params;
@@ -262,7 +286,7 @@ const userRoutes = (pool, authenticateToken) => {
     }
   });
 
-  // УПРАВЛЕНИЕ ДРУЗЬЯМИ
+  // Управление друзьями
 
   // Отправка запроса в друзья
   router.post('/friends/request', authenticateToken, async (req, res) => {
@@ -396,7 +420,7 @@ const userRoutes = (pool, authenticateToken) => {
       const userId = req.user.user_id;
 
       const [friends] = await pool.execute(
-        `SELECT u.user_id, u.name, u.surname, u.nick, u.avatar_url, u.is_online, u.last_seen
+        `SELECT u.user_id, u.name, u.surname, u.nick, u.avatar_url, u.cover_url, u.is_online, u.last_seen
          FROM users u
          WHERE u.user_id IN (
            SELECT user_id2 FROM friendships WHERE user_id1 = ? AND status = 'accepted'
@@ -420,7 +444,7 @@ const userRoutes = (pool, authenticateToken) => {
       const userId = req.user.user_id;
 
       const [requests] = await pool.execute(
-        `SELECT f.friendship_id, u.user_id, u.name, u.surname, u.nick, u.avatar_url,
+        `SELECT f.friendship_id, u.user_id, u.name, u.surname, u.nick, u.avatar_url, u.cover_url,
                 (SELECT COUNT(*) FROM friendships f2 
                  WHERE ((f2.user_id1 = u.user_id AND f2.user_id2 IN 
                    (SELECT user_id2 FROM friendships WHERE user_id1 = ? AND status = 'accepted'
