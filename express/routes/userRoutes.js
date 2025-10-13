@@ -289,185 +289,331 @@ const userRoutes = (pool, authenticateToken, upload) => {
   // Управление друзьями
 
   // Отправка запроса в друзья
-  router.post('/friends/request', authenticateToken, async (req, res) => {
+router.post('/friends/request', authenticateToken, async (req, res) => {
     try {
-      const { targetUserId } = req.body;
-      const userId = req.user.user_id;
+        const { targetUserId } = req.body;
+        const userId = req.user.user_id;
 
-      if (userId === targetUserId) {
-        return res.status(400).json({ error: 'Нельзя отправить запрос самому себе' });
-      }
+        if (userId === targetUserId) {
+            return res.status(400).json({ error: 'Нельзя отправить запрос самому себе' });
+        }
 
-      // Проверяем существование пользователя
-      const [targetUsers] = await pool.execute(
-        'SELECT user_id FROM users WHERE user_id = ? AND is_active = TRUE',
-        [targetUserId]
-      );
+        // Проверяем существование пользователя
+        const [targetUsers] = await pool.execute(
+            'SELECT user_id FROM users WHERE user_id = ? AND is_active = TRUE',
+            [targetUserId]
+        );
 
-      if (targetUsers.length === 0) {
-        return res.status(404).json({ error: 'Пользователь не найден' });
-      }
+        if (targetUsers.length === 0) {
+            return res.status(404).json({ error: 'Пользователь не найден' });
+        }
 
-      // Проверяем, не отправили ли уже запрос
-      const [existingRequests] = await pool.execute(
-        `SELECT friendship_id FROM friendships 
-         WHERE (user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)`,
-        [userId, targetUserId, targetUserId, userId]
-      );
+        // Проверяем, не отправили ли уже запрос
+        const [existingRequests] = await pool.execute(
+            `SELECT friendship_id FROM friendships 
+             WHERE (user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)`,
+            [userId, targetUserId, targetUserId, userId]
+        );
 
-      if (existingRequests.length > 0) {
-        return res.status(409).json({ error: 'Запрос в друзья уже отправлен' });
-      }
+        if (existingRequests.length > 0) {
+            return res.status(409).json({ error: 'Запрос в друзья уже отправлен' });
+        }
 
-      // Создаем запрос в друзья
-      await pool.execute(
-        'INSERT INTO friendships (user_id1, user_id2, status, action_user_id) VALUES (?, ?, ?, ?)',
-        [userId, targetUserId, 'pending', userId]
-      );
+        // Создаем запрос в друзья
+        await pool.execute(
+            'INSERT INTO friendships (user_id1, user_id2, status, action_user_id) VALUES (?, ?, ?, ?)',
+            [userId, targetUserId, 'pending', userId]
+        );
 
-      res.json({ message: 'Запрос в друзья отправлен' });
+        res.json({ message: 'Запрос в друзья отправлен' });
     } catch (error) {
-      console.error('Friend request error:', error);
-      res.status(500).json({ error: 'Ошибка отправки запроса в друзья' });
+        console.error('Friend request error:', error);
+        res.status(500).json({ error: 'Ошибка отправки запроса в друзья' });
     }
-  });
+});
 
   // Принятие запроса в друзья
-  router.post('/friends/accept', authenticateToken, async (req, res) => {
+ router.post('/friends/accept', authenticateToken, async (req, res) => {
     try {
-      const { friendshipId } = req.body;
-      const userId = req.user.user_id;
+        const { friendshipId } = req.body;
+        const userId = req.user.user_id;
 
-      // Проверяем, что запрос существует и адресован текущему пользователю
-      const [friendships] = await pool.execute(
-        'SELECT * FROM friendships WHERE friendship_id = ? AND user_id2 = ? AND status = ?',
-        [friendshipId, userId, 'pending']
-      );
+        // Проверяем, что запрос существует и адресован текущему пользователю
+        const [friendships] = await pool.execute(
+            'SELECT * FROM friendships WHERE friendship_id = ? AND user_id2 = ? AND status = ?',
+            [friendshipId, userId, 'pending']
+        );
 
-      if (friendships.length === 0) {
-        return res.status(404).json({ error: 'Запрос в друзья не найден' });
-      }
+        if (friendships.length === 0) {
+            return res.status(404).json({ error: 'Запрос в друзья не найден' });
+        }
 
-      // Принимаем запрос
-      await pool.execute(
-        'UPDATE friendships SET status = ?, action_user_id = ?, updated_at = CURRENT_TIMESTAMP WHERE friendship_id = ?',
-        ['accepted', userId, friendshipId]
-      );
+        // Принимаем запрос
+        await pool.execute(
+            'UPDATE friendships SET status = ?, action_user_id = ?, updated_at = CURRENT_TIMESTAMP WHERE friendship_id = ?',
+            ['accepted', userId, friendshipId]
+        );
 
-      res.json({ message: 'Запрос в друзья принят' });
+        res.json({ message: 'Запрос в друзья принят' });
     } catch (error) {
-      console.error('Accept friend request error:', error);
-      res.status(500).json({ error: 'Ошибка принятия запроса в друзья' });
+        console.error('Accept friend request error:', error);
+        res.status(500).json({ error: 'Ошибка принятия запроса в друзья' });
     }
-  });
+});
 
   // Отклонение запроса в друзья
-  router.post('/friends/decline', authenticateToken, async (req, res) => {
+ router.post('/friends/decline', authenticateToken, async (req, res) => {
     try {
-      const { friendshipId } = req.body;
-      const userId = req.user.user_id;
+        const { friendshipId } = req.body;
+        const userId = req.user.user_id;
 
-      const [friendships] = await pool.execute(
-        'SELECT * FROM friendships WHERE friendship_id = ? AND user_id2 = ? AND status = ?',
-        [friendshipId, userId, 'pending']
-      );
+        const [friendships] = await pool.execute(
+            'SELECT * FROM friendships WHERE friendship_id = ? AND user_id2 = ? AND status = ?',
+            [friendshipId, userId, 'pending']
+        );
 
-      if (friendships.length === 0) {
-        return res.status(404).json({ error: 'Запрос в друзья не найден' });
-      }
+        if (friendships.length === 0) {
+            return res.status(404).json({ error: 'Запрос в друзья не найден' });
+        }
 
-      // Отклоняем запрос
-      await pool.execute(
-        'UPDATE friendships SET status = ?, action_user_id = ?, updated_at = CURRENT_TIMESTAMP WHERE friendship_id = ?',
-        ['rejected', userId, friendshipId]
-      );
+        // Отклоняем запрос
+        await pool.execute(
+            'UPDATE friendships SET status = ?, action_user_id = ?, updated_at = CURRENT_TIMESTAMP WHERE friendship_id = ?',
+            ['rejected', userId, friendshipId]
+        );
 
-      res.json({ message: 'Запрос в друзья отклонен' });
+        res.json({ message: 'Запрос в друзья отклонен' });
     } catch (error) {
-      console.error('Decline friend request error:', error);
-      res.status(500).json({ error: 'Ошибка отклонения запроса в друзья' });
+        console.error('Decline friend request error:', error);
+        res.status(500).json({ error: 'Ошибка отклонения запроса в друзья' });
     }
-  });
+});
+
+// Добавление поста в избранное
+router.post('/posts/:postId/favorite', authenticateToken, async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.user.user_id;
+
+        // Проверяем, существует ли пост
+        const [posts] = await pool.execute(
+            'SELECT post_id FROM posts WHERE post_id = ? AND is_published = TRUE',
+            [postId]
+        );
+
+        if (posts.length === 0) {
+            return res.status(404).json({ error: 'Пост не найден' });
+        }
+
+        // Проверяем, не добавлен ли уже в избранное
+        const [existingFavorites] = await pool.execute(
+            'SELECT favorite_id FROM user_favorites WHERE post_id = ? AND user_id = ?',
+            [postId, userId]
+        );
+
+        if (existingFavorites.length > 0) {
+            return res.status(409).json({ error: 'Пост уже в избранном' });
+        }
+
+        // Добавляем в избранное
+        await pool.execute(
+            'INSERT INTO user_favorites (user_id, post_id) VALUES (?, ?)',
+            [userId, postId]
+        );
+
+        res.json({ 
+            message: 'Пост добавлен в избранное',
+            favorited: true 
+        });
+    } catch (error) {
+        console.error('Add to favorites error:', error);
+        res.status(500).json({ error: 'Ошибка добавления в избранное' });
+    }
+});
+
+// Удаление поста из избранного
+router.delete('/posts/:postId/favorite', authenticateToken, async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.user.user_id;
+
+        const [result] = await pool.execute(
+            'DELETE FROM user_favorites WHERE post_id = ? AND user_id = ?',
+            [postId, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Пост не найден в избранном' });
+        }
+
+        res.json({ 
+            message: 'Пост удален из избранного',
+            favorited: false 
+        });
+    } catch (error) {
+        console.error('Remove from favorites error:', error);
+        res.status(500).json({ error: 'Ошибка удаления из избранного' });
+    }
+});
+
+// Получение конкретного поста по ID
+router.get('/posts/:postId', authenticateToken, async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const userId = req.user.user_id;
+
+    const [posts] = await pool.execute(
+      `SELECT p.*, 
+              u.name, u.surname, u.nick, u.avatar_url, u.cover_url,
+              (SELECT COUNT(*) FROM post_likes WHERE post_id = p.post_id) as likes_count,
+              (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comments_count,
+              EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.post_id AND user_id = ?) as is_liked
+       FROM posts p
+       JOIN users u ON p.user_id = u.user_id
+       WHERE p.post_id = ? AND p.is_published = TRUE`,
+      [userId, postId]
+    );
+
+    if (posts.length === 0) {
+      return res.status(404).json({ error: 'Пост не найден' });
+    }
+
+    res.json({ post: posts[0] });
+  } catch (error) {
+    console.error('Get post error:', error);
+    res.status(500).json({ error: 'Ошибка загрузки поста' });
+  }
+});
+
+// Проверка, добавлен ли пост в избранное
+router.get('/posts/:postId/favorite/check', authenticateToken, async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.user.user_id;
+
+        const [favorites] = await pool.execute(
+            'SELECT favorite_id FROM user_favorites WHERE post_id = ? AND user_id = ?',
+            [postId, userId]
+        );
+
+        res.json({ 
+            isFavorite: favorites.length > 0
+        });
+    } catch (error) {
+        console.error('Check favorite error:', error);
+        res.status(500).json({ error: 'Ошибка проверки избранного' });
+    }
+});
+
+// Получение избранных постов пользователя
+router.get('/favorites/posts', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.user_id;
+
+        const [favorites] = await pool.execute(
+            `SELECT p.*, 
+                    u.name, u.surname, u.nick, u.avatar_url, u.cover_url,
+                    (SELECT COUNT(*) FROM post_likes WHERE post_id = p.post_id) as likes_count,
+                    (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comments_count,
+                    EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.post_id AND user_id = ?) as is_liked,
+                    uf.created_at as favorited_at
+             FROM user_favorites uf
+             JOIN posts p ON uf.post_id = p.post_id
+             JOIN users u ON p.user_id = u.user_id
+             WHERE uf.user_id = ? AND p.is_published = TRUE
+             ORDER BY uf.created_at DESC`,
+            [userId, userId]
+        );
+
+        res.json({ favorites });
+    } catch (error) {
+        console.error('Get favorites error:', error);
+        res.status(500).json({ error: 'Ошибка загрузки избранных постов' });
+    }
+});
+
 
   // Удаление из друзей
   router.delete('/friends/remove', authenticateToken, async (req, res) => {
     try {
-      const { friendId } = req.body;
-      const userId = req.user.user_id;
+        const { friendId } = req.body;
+        const userId = req.user.user_id;
 
-      // Удаляем дружбу
-      const [result] = await pool.execute(
-        `DELETE FROM friendships 
-         WHERE ((user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)) 
-         AND status = ?`,
-        [userId, friendId, friendId, userId, 'accepted']
-      );
+        // Удаляем дружбу
+        const [result] = await pool.execute(
+            `DELETE FROM friendships 
+             WHERE ((user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)) 
+             AND status = ?`,
+            [userId, friendId, friendId, userId, 'accepted']
+        );
 
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ error: 'Друг не найден' });
-      }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Друг не найден' });
+        }
 
-      res.json({ message: 'Пользователь удален из друзей' });
+        res.json({ message: 'Пользователь удален из друзей' });
     } catch (error) {
-      console.error('Remove friend error:', error);
-      res.status(500).json({ error: 'Ошибка удаления из друзей' });
+        console.error('Remove friend error:', error);
+        res.status(500).json({ error: 'Ошибка удаления из друзей' });
     }
-  });
+});
 
   // Получение списка друзей
   router.get('/friends', authenticateToken, async (req, res) => {
     try {
-      const userId = req.user.user_id;
+        const userId = req.user.user_id;
 
-      const [friends] = await pool.execute(
-        `SELECT u.user_id, u.name, u.surname, u.nick, u.avatar_url, u.cover_url, u.is_online, u.last_seen
-         FROM users u
-         WHERE u.user_id IN (
-           SELECT user_id2 FROM friendships WHERE user_id1 = ? AND status = 'accepted'
-           UNION
-           SELECT user_id1 FROM friendships WHERE user_id2 = ? AND status = 'accepted'
-         )
-         ORDER BY u.is_online DESC, u.name ASC`,
-        [userId, userId]
-      );
+        const [friends] = await pool.execute(
+            `SELECT u.user_id, u.name, u.surname, u.nick, u.avatar_url, u.cover_url, 
+                    u.is_online, u.last_seen
+             FROM users u
+             WHERE u.user_id IN (
+                 SELECT user_id2 FROM friendships WHERE user_id1 = ? AND status = 'accepted'
+                 UNION
+                 SELECT user_id1 FROM friendships WHERE user_id2 = ? AND status = 'accepted'
+             )
+             ORDER BY u.is_online DESC, u.name ASC`,
+            [userId, userId]
+        );
 
-      res.json({ friends });
+        res.json({ friends });
     } catch (error) {
-      console.error('Get friends error:', error);
-      res.status(500).json({ error: 'Ошибка загрузки списка друзей' });
+        console.error('Get friends error:', error);
+        res.status(500).json({ error: 'Ошибка загрузки списка друзей' });
     }
-  });
+});
 
   // Получение входящих запросов в друзья
   router.get('/friends/requests', authenticateToken, async (req, res) => {
     try {
-      const userId = req.user.user_id;
+        const userId = req.user.user_id;
 
-      const [requests] = await pool.execute(
-        `SELECT f.friendship_id, u.user_id, u.name, u.surname, u.nick, u.avatar_url, u.cover_url,
-                (SELECT COUNT(*) FROM friendships f2 
-                 WHERE ((f2.user_id1 = u.user_id AND f2.user_id2 IN 
-                   (SELECT user_id2 FROM friendships WHERE user_id1 = ? AND status = 'accepted'
-                    UNION 
-                    SELECT user_id1 FROM friendships WHERE user_id2 = ? AND status = 'accepted'))
-                 OR (f2.user_id2 = u.user_id AND f2.user_id1 IN 
-                   (SELECT user_id2 FROM friendships WHERE user_id1 = ? AND status = 'accepted'
-                    UNION 
-                    SELECT user_id1 FROM friendships WHERE user_id2 = ? AND status = 'accepted')))
-                 AND f2.status = 'accepted') as mutual_friends
-         FROM friendships f
-         JOIN users u ON f.user_id1 = u.user_id
-         WHERE f.user_id2 = ? AND f.status = 'pending'
-         ORDER BY f.created_at DESC`,
-        [userId, userId, userId, userId, userId]
-      );
+        const [requests] = await pool.execute(
+            `SELECT f.friendship_id, u.user_id, u.name, u.surname, u.nick, 
+                    u.avatar_url, u.cover_url,
+                    (SELECT COUNT(*) FROM friendships f2 
+                     WHERE ((f2.user_id1 = u.user_id AND f2.user_id2 IN (
+                         SELECT user_id2 FROM friendships WHERE user_id1 = ? AND status = 'accepted'
+                         UNION 
+                         SELECT user_id1 FROM friendships WHERE user_id2 = ? AND status = 'accepted'
+                     )) OR (f2.user_id2 = u.user_id AND f2.user_id1 IN (
+                         SELECT user_id2 FROM friendships WHERE user_id1 = ? AND status = 'accepted'
+                         UNION 
+                         SELECT user_id1 FROM friendships WHERE user_id2 = ? AND status = 'accepted'
+                     ))) AND f2.status = 'accepted') as mutual_friends
+             FROM friendships f
+             JOIN users u ON f.user_id1 = u.user_id
+             WHERE f.user_id2 = ? AND f.status = 'pending'
+             ORDER BY f.created_at DESC`,
+            [userId, userId, userId, userId, userId]
+        );
 
-      res.json({ requests });
+        res.json({ requests });
     } catch (error) {
-      console.error('Get friend requests error:', error);
-      res.status(500).json({ error: 'Ошибка загрузки запросов в друзья' });
+        console.error('Get friend requests error:', error);
+        res.status(500).json({ error: 'Ошибка загрузки запросов в друзья' });
     }
-  });
+});
 
   return router;
 };

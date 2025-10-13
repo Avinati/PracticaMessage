@@ -270,6 +270,7 @@ function Main() {
                     <div className="news-items">
                         {/* Приветственный пост для авторизованных пользователей */}
                         {isAuthenticated && posts.length === 0 && !postsLoading && (
+                            <Link to = '/post/:postId'>
                             <div className="news-item welcome-post">
                                 <div className="news-author">
                                     <img src={user?.avatar_url || Pfp} alt="Автор" className="author-avatar" />
@@ -280,6 +281,7 @@ function Main() {
                                     <p className="welcome-hint">Добавьте друзей чтобы видеть их посты!</p>
                                 </div>
                             </div>
+                            </Link>
                         )}
 
                         {/* Загрузка постов */}

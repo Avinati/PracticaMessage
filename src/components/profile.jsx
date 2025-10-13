@@ -90,7 +90,7 @@ function Profile() {
                 </div>
                 
                 <div className="main-profile">
-                    {/* Обновленный profile-hero с фоном */}
+                    {/* Обновленный profile-hero с исправлениями */}
                     <div 
                         className="profile-hero"
                         style={{
@@ -105,35 +105,37 @@ function Profile() {
                         {/* Затемнение для лучшей читаемости текста поверх фона */}
                         <div className="profile-hero-overlay"></div>
                         
-                        <div className="user-galaxy">
-                            <img 
-                                className="avatar-cosmic" 
-                                src={user.avatar_url || "./Аватарка.png"} 
-                                alt="Аватар" 
-                                onError={(e) => {
-                                    e.target.src = "./Аватарка.png";
-                                }}
-                            />
-                            <div className="user-stardust">
-                                <h3>{user.name} {user.surname}</h3>
-                                <p>@{user.nick || user.email.split('@')[0]}</p>
-                                <p className="user-status">
-                                    {user.is_online ? 'Online' : `Был(а) ${formatLastSeen(user.last_seen)}`}
-                                </p>
+                        <div className="profile-hero-content">
+                            <div className="user-galaxy">
+                                <img 
+                                    className="avatar-cosmic" 
+                                    src={user.avatar_url || "./Аватарка.png"} 
+                                    alt="Аватар" 
+                                    onError={(e) => {
+                                        e.target.src = "./Аватарка.png";
+                                    }}
+                                />
+                                <div className="user-stardust">
+                                    <h3>{user.name} {user.surname}</h3>
+                                    <p>@{user.nick || user.email.split('@')[0]}</p>
+                                    <p className="user-status">
+                                        {user.is_online ? 'Online' : `Был(а) ${formatLastSeen(user.last_seen)}`}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                        <div className="profile-info">
-                            <div className="orbit-actions">
-                                <Link to='/settings'>
-                                    <button className="quantum-settings">
-                                        <img className="settings-portal" src="./Настройки.png" alt="Настройки" />
-                                    </button>
-                                </Link>
-                                <Link to='/upload'>
-                                    <button className="nebula-chat">
-                                        <img className="chat-wormhole" src="./chat1.png" alt="Чат" />
-                                    </button>
-                                </Link>
+                            <div className="profile-info">
+                                <div className="orbit-actions">
+                                    <Link to='/settings'>
+                                        <button className="quantum-settings">
+                                            <img className="settings-portal" src="./Настройки.png" alt="Настройки" />
+                                        </button>
+                                    </Link>
+                                    <Link to='/upload'>
+                                        <button className="nebula-chat">
+                                            <img className="chat-wormhole" src="./chat1.png" alt="Чат" />
+                                        </button>
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>

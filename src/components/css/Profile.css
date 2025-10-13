@@ -8,6 +8,150 @@
     box-sizing: border-box;
 } 
 
+/* Исправления для кликабельности кнопок */
+
+.profile-hero {
+    position: relative;
+    min-height: 300px;
+    display: flex;
+    align-items: flex-end;
+    padding: 20px;
+}
+
+.profile-hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1;
+}
+
+.profile-hero-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.user-galaxy {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+}
+
+.avatar-cosmic {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid white;
+    object-fit: cover;
+    background-color: #f0f0f0;
+}
+
+.user-stardust {
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.user-stardust h3 {
+    font-size: 2rem;
+    margin: 0 0 8px 0;
+    font-weight: bold;
+}
+
+.user-stardust p {
+    margin: 4px 0;
+    font-size: 1.1rem;
+}
+
+.user-status {
+    font-weight: 600;
+}
+
+.orbit-actions {
+    display: flex;
+    gap: 15px;
+    z-index: 10;
+    position: relative;
+}
+
+.quantum-settings,
+.nebula-chat {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.quantum-settings:hover,
+.nebula-chat:hover {
+    background: white;
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.settings-portal,
+.chat-wormhole {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .profile-hero-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .user-galaxy {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .orbit-actions {
+        margin-top: 20px;
+    }
+    
+    .avatar-cosmic {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .user-stardust h3 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Убедитесь, что ссылки кликабельны */
+.orbit-actions a {
+    display: block;
+    text-decoration: none;
+    position: relative;
+    z-index: 10;
+}
+
+/* Убираем возможные перекрытия */
+.profile-info {
+    position: relative;
+    z-index: 10;
+}
+
 .profile-hero {
     display: flex;
     flex-direction: row;

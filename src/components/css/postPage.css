@@ -104,6 +104,7 @@
     gap: 10px;
 }
 
+/* Стили для кнопки избранного */
 .save-btn {
     background: rgba(255, 255, 255, 0.25);
     border: none;
@@ -111,6 +112,9 @@
     padding: 12px;
     border-radius: 50%;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .save-btn:hover {
@@ -118,9 +122,23 @@
     transform: scale(1.1);
 }
 
+.save-btn.saved {
+    background-color: rgba(56, 102, 65, 0.2);
+}
+
 .favpost-icon {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
+    transition: transform 0.2s ease;
+    object-fit: contain;
+}
+
+.save-btn:hover .favpost-icon {
+    transform: scale(1.1);
+}
+
+.save-btn.saved .favpost-icon {
+    filter: invert(27%) sepia(85%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
 }
 
 /* Заголовок поста */
@@ -383,6 +401,18 @@ body::-webkit-scrollbar {
     display: none;
 }
 
+/* Состояния загрузки и ошибок */
+.loading, .error {
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 18px;
+    color: #666;
+}
+
+.error {
+    color: #dc3545;
+}
+
 /* Адаптивность */
 @media (max-width: 1200px) {
     .posts-container {
@@ -515,4 +545,49 @@ body::-webkit-scrollbar {
     .comment-submit-btn {
         width: 100%;
     }
+    
+    /* Мобильные стили для кнопки избранного */
+    .save-btn {
+        padding: 10px;
+    }
+    
+    .favpost-icon {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* Дополнительные стили для лучшей видимости кнопки избранного */
+.post-actions-top {
+    position: relative;
+    z-index: 10;
+}
+
+.save-btn {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.save-btn:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.save-btn.saved {
+    border-color: #386641;
+    animation: pulse 0.6s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+/* Убедимся, что кнопка всегда видна */
+.post-header {
+    position: relative;
+}
+
+.post-actions-top {
+    position: static;
 }

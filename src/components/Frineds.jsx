@@ -17,27 +17,23 @@ function Main() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // Статические данные друзей
-    const friendsData = [
-        { id: 1, name: "Анна Иванова", status: "online", avatar: "АИ" },
-        { id: 2, name: "Петр Сидоров", status: "offline", avatar: "ПС" },
-        { id: 3, name: "Мария Петрова", status: "online", avatar: "МП" },
-        { id: 4, name: "Иван Козлов", status: "online", avatar: "ИК" },
-        { id: 5, name: "Елена Смирнова", status: "offline", avatar: "ЕС" },
-        { id: 6, name: "Дмитрий Волков", status: "online", avatar: "ДВ" },
-    ];
-
-    // Статические данные запросов в друзья
-    const friendRequests = [
-        { id: 1, name: "Сергей Новиков", mutualFriends: 3, avatar: "СН" },
-        { id: 2, name: "Ольга Ковалева", mutualFriends: 7, avatar: "ОК" },
-        { id: 3, name: "Алексей Морозов", mutualFriends: 1, avatar: "АМ" },
-    ];
+    
+    // Состояния для данных
+    const [friends, setFriends] = useState([]);
+    const [friendRequests, setFriendRequests] = useState([]);
+    const [searchResults, setSearchResults] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
         checkAuthentication();
     }, []);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            loadFriendsData();
+        }
+    }, [isAuthenticated]);
 
     const checkAuthentication = async () => {
         const token = localStorage.getItem('token');
@@ -78,6 +74,84 @@ function Main() {
         }
     };
 
+    const handleLogout = async () => {
+    if (window.confirm('Вы уверены, что хотите выйти?')) {
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Вызываем endpoint выхода на сервере
+            await fetch('http://localhost:5000/api/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            // Очищаем локальное хранилище
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            
+            // Сбрасываем состояние
+            setIsAuthenticated(false);
+            setUser(null);
+            setFriends([]);
+            setFriendRequests([]);
+            setSearchResults([]);
+            
+            // Перенаправляем на главную страницу
+            navigate('/');
+            
+            alert('Вы успешно вышли из аккаунта');
+            
+        } catch (error) {
+            console.error('Logout error:', error);
+            // В любом случае очищаем локальное хранилище
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setIsAuthenticated(false);
+            setUser(null);
+            navigate('/');
+        }
+    }
+};
+
+    const loadFriendsData = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Загрузка списка друзей
+            const friendsResponse = await fetch('http://localhost:5000/api/users/friends', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (friendsResponse.ok) {
+                const friendsData = await friendsResponse.json();
+                setFriends(friendsData.friends || []);
+            }
+
+            // Загрузка запросов в друзья
+            const requestsResponse = await fetch('http://localhost:5000/api/users/friends/requests', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (requestsResponse.ok) {
+                const requestsData = await requestsResponse.json();
+                setFriendRequests(requestsData.requests || []);
+            }
+        } catch (error) {
+            console.error('Error loading friends data:', error);
+        }
+    };
+
     const handleProtectedAction = (actionName) => {
         if (!isAuthenticated) {
             alert(`Войдите в аккаунт чтобы ${actionName}`);
@@ -86,30 +160,160 @@ function Main() {
         return true;
     };
 
-    const handleRemoveFriend = (friendId, friendName) => {
+    const handleRemoveFriend = async (friendId, friendName) => {
         if (!handleProtectedAction('удалить друга')) return;
         
         if (window.confirm(`Вы уверены, что хотите удалить ${friendName} из друзей?`)) {
-            // Здесь будет логика удаления друга
-            console.log(`Удаляем друга с ID: ${friendId}`);
-            alert(`${friendName} удален из друзей`);
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:5000/api/users/friends/remove', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ friendId })
+                });
+
+                if (response.ok) {
+                    setFriends(prev => prev.filter(friend => friend.user_id !== friendId));
+                    alert(`${friendName} удален из друзей`);
+                } else {
+                    const error = await response.json();
+                    alert(`Ошибка: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Remove friend error:', error);
+                alert('Ошибка при удалении друга');
+            }
         }
     };
 
-    const handleAcceptRequest = (requestId, requestName) => {
+    const handleAcceptRequest = async (friendshipId, requestName) => {
         if (!handleProtectedAction('принять запрос в друзья')) return;
         
-        // Здесь будет логика принятия запроса
-        console.log(`Принимаем запрос с ID: ${requestId}`);
-        alert(`Запрос от ${requestName} принят`);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/api/users/friends/accept', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ friendshipId })
+            });
+
+            if (response.ok) {
+                setFriendRequests(prev => prev.filter(req => req.friendship_id !== friendshipId));
+                // Обновляем список друзей
+                await loadFriendsData();
+                alert(`Запрос от ${requestName} принят`);
+            } else {
+                const error = await response.json();
+                alert(`Ошибка: ${error.error}`);
+            }
+        } catch (error) {
+            console.error('Accept request error:', error);
+            alert('Ошибка при принятии запроса');
+        }
     };
 
-    const handleDeclineRequest = (requestId, requestName) => {
+    const handleDeclineRequest = async (friendshipId, requestName) => {
         if (!handleProtectedAction('отклонить запрос в друзья')) return;
         
-        // Здесь будет логика отклонения запроса
-        console.log(`Отклоняем запрос с ID: ${requestId}`);
-        alert(`Запрос от ${requestName} отклонен`);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/api/users/friends/decline', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ friendshipId })
+            });
+
+            if (response.ok) {
+                setFriendRequests(prev => prev.filter(req => req.friendship_id !== friendshipId));
+                alert(`Запрос от ${requestName} отклонен`);
+            } else {
+                const error = await response.json();
+                alert(`Ошибка: ${error.error}`);
+            }
+        } catch (error) {
+            console.error('Decline request error:', error);
+            alert('Ошибка при отклонении запроса');
+        }
+    };
+
+    const handleSearchFriends = async (e) => {
+        e.preventDefault();
+        
+        if (!searchQuery.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        if (!handleProtectedAction('искать друзей')) return;
+
+        setIsSearching(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5000/api/users/search?query=${encodeURIComponent(searchQuery)}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setSearchResults(data.users || []);
+            } else {
+                setSearchResults([]);
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+            setSearchResults([]);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleSendFriendRequest = async (targetUserId, targetUserName) => {
+        if (!handleProtectedAction('отправить запрос в друзья')) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/api/users/friends/request', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ targetUserId })
+            });
+
+            if (response.ok) {
+                alert(`Запрос в друзья отправлен ${targetUserName}`);
+                // Обновляем результаты поиска
+                setSearchResults(prev => prev.filter(user => user.user_id !== targetUserId));
+            } else {
+                const error = await response.json();
+                alert(`Ошибка: ${error.error}`);
+            }
+        } catch (error) {
+            console.error('Send friend request error:', error);
+            alert('Ошибка при отправке запроса в друзья');
+        }
+    };
+
+    const getAvatarDisplay = (user) => {
+        if (user.avatar_url) {
+            return <img src={user.avatar_url} alt="Avatar" className="avatar-image" />;
+        }
+        return user.nick ? user.nick.substring(0, 2).toUpperCase() : 
+               (user.name && user.surname) ? `${user.name[0]}${user.surname[0]}`.toUpperCase() : 'U';
     };
 
     if (loading) {
@@ -146,31 +350,42 @@ function Main() {
         <div className="main-content">
             <div className="header-box">
                 <div className="header-container">
-                <Link to="/">
-                <img className="logo" src={Logo} alt="Логотип" />
-                </Link>
-                <input type="text" className="search-input" placeholder="Поиск..." />
-                <Link to="/favorite">
-                <button className="fav-btn">
-                    <img src={Fav} alt="Избранное" />
-                </button>
-                </Link>
-                
-                {/* Динамическая кнопка профиля */}
-                {isAuthenticated ? (
-                    <Link to="/profile">
-                        <button className="pfp-btn">
-                            <img src={user?.avatar_url || Pfp} alt="Профиль" />
-                        </button>
-                    </Link>
-                ) : (
-                    <Link to="/login">
-                        <button className="pfp-btn">
-                            <img src={Pfp} alt="Профиль" />
-                        </button>
-                    </Link>
-                )}
-                </div>
+    <Link to="/">
+        <img className="logo" src={Logo} alt="Логотип" />
+    </Link>
+    <input type="text" className="search-input" placeholder="Поиск..." />
+    <Link to="/favorite">
+        <button className="fav-btn">
+            <img src={Fav} alt="Избранное" />
+        </button>
+    </Link>
+    
+    {/* Динамическая кнопка профиля */}
+    {isAuthenticated ? (
+        <Link to="/profile">
+            <button className="pfp-btn">
+                <img src={user?.avatar_url || Pfp} alt="Профиль" />
+            </button>
+        </Link>
+    ) : (
+        <Link to="/login">
+            <button className="pfp-btn">
+                <img src={Pfp} alt="Профиль" />
+            </button>
+        </Link>
+    )}
+    
+    {/* Кнопка выхода - показываем только для авторизованных пользователей */}
+    {isAuthenticated && (
+        <button 
+            className="logout-btn"
+            onClick={handleLogout}
+            title="Выйти"
+        >
+            <span>Выйти</span>
+        </button>
+    )}
+</div>
             </div>
             
             <div className="content-wrapper">
@@ -223,98 +438,153 @@ function Main() {
                 </div>
 
                 <div className="friends-content">
-                   
-
-                    <div className="friends-section">
-                        <div className="section-header">
-                            <h2 className="section-title">Друзья</h2>
-                            <span className="friends-count">{friendsData.length} друзей</span>
-                        </div>
-                        <div className="friends-list">
-                            {friendsData.map(friend => (
-                                <div key={friend.id} className="friend-card">
-                                    <div className="friend-avatar-container">
-                                        <div className="friend-avatar">
-                                            {friend.avatar}
-                                        </div>
-                                        <div className={`status-dot ${friend.status}`}></div>
-                                    </div>
-                                    
-                                    <div className="friend-info">
-                                        <h3 className="friend-name">{friend.name}</h3>
-                                        <span className="friend-status">
-                                            {friend.status === 'online' ? 'В сети' : 'Не в сети'}
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="friend-actions">
-                                        <button 
-                                            className="action-btn remove-btn"
-                                            onClick={() => handleRemoveFriend(friend.id, friend.name)}
-                                        >
-                                            <img src={Bin} alt="Удалить" width="16" height="16" />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    
-                    <div className="requests-section">
-                        <div className="section-header">
-                            <h2 className="section-title">Запросы в друзья</h2>
-                            <span className="requests-count">{friendRequests.length} запросов</span>
-                        </div>
-                        <div className="requests-list">
-                            {friendRequests.map(request => (
-                                <div key={request.id} className="request-card">
-                                    <div className="request-avatar-container">
-                                        <div className="request-avatar">
-                                            {request.avatar}
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="request-info">
-                                        <h3 className="request-name">{request.name}</h3>
-                                        <span className="mutual-friends">
-                                            {request.mutualFriends} общих друзей
-                                        </span>
-                                    </div>
-                                    
-                                    <div className="request-actions">
-                                        <button 
-                                            className="action-btn accept-btn"
-                                            onClick={() => handleAcceptRequest(request.id, request.name)}
-                                        >
-                                            <img src={Yes} alt="Принять" width="16" height="16" />
-                                        </button>
-                                        <button 
-                                            className="action-btn decline-btn"
-                                            onClick={() => handleDeclineRequest(request.id, request.name)}
-                                        >
-                                            <img src={No} alt="Отклонить" width="16" height="16" />
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
                     {/* Секция поиска друзей */}
                     <div className="find-friends-section">
                         <div className="section-header">
                             <h2 className="section-title">Найти друзей</h2>
                         </div>
                         <div className="search-friends">
-                            <input 
-                                type="text" 
-                                className="search-friends-input" 
-                                placeholder="Поиск по имени или email..." 
-                            />
-                            <button className="search-friends-btn">
-                                Поиск
-                            </button>
+                            <form onSubmit={handleSearchFriends} className="search-form">
+                                <input 
+                                    type="text" 
+                                    className="search-friends-input" 
+                                    placeholder="Поиск по имени, фамилии или никнейму..." 
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                                <button type="submit" className="search-friends-btn" disabled={isSearching}>
+                                    {isSearching ? 'Поиск...' : 'Поиск'}
+                                </button>
+                            </form>
                         </div>
+
+                        {/* Результаты поиска */}
+                        {searchResults.length > 0 && (
+                            <div className="search-results">
+                                <h3 className="search-results-title">Результаты поиска</h3>
+                                <div className="search-results-list">
+                                    {searchResults.map(user => (
+                                        <div key={user.user_id} className="search-result-card">
+                                            <div className="search-result-avatar">
+                                                {getAvatarDisplay(user)}
+                                            </div>
+                                            <div className="search-result-info">
+                                                <h4 className="search-result-name">
+                                                    {user.name} {user.surname}
+                                                    {user.nick && <span className="search-result-nick"> (@{user.nick})</span>}
+                                                </h4>
+                                                <span className="search-result-status">
+                                                    {user.is_online ? 'В сети' : 'Не в сети'}
+                                                </span>
+                                            </div>
+                                            <button 
+                                                className="add-friend-btn"
+                                                onClick={() => handleSendFriendRequest(user.user_id, `${user.name} ${user.surname}`)}
+                                            >
+                                                Добавить в друзья
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {searchQuery && searchResults.length === 0 && !isSearching && (
+                            <div className="no-results">
+                                <p>Пользователи не найдены</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Секция запросов в друзья */}
+                    {friendRequests.length > 0 && (
+                        <div className="requests-section">
+                            <div className="section-header">
+                                <h2 className="section-title">Запросы в друзья</h2>
+                                <span className="requests-count">{friendRequests.length} запросов</span>
+                            </div>
+                            <div className="requests-list">
+                                {friendRequests.map(request => (
+                                    <div key={request.friendship_id} className="request-card">
+                                        <div className="request-avatar-container">
+                                            <div className="request-avatar">
+                                                {getAvatarDisplay(request)}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="request-info">
+                                            <h3 className="request-name">
+                                                {request.name} {request.surname}
+                                                {request.nick && <span className="request-nick"> (@{request.nick})</span>}
+                                            </h3>
+                                            <span className="mutual-friends">
+                                                {request.mutual_friends || 0} общих друзей
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="request-actions">
+                                            <button 
+                                                className="action-btn accept-btn"
+                                                onClick={() => handleAcceptRequest(request.friendship_id, `${request.name} ${request.surname}`)}
+                                            >
+                                                <img src={Yes} alt="Принять" width="16" height="16" />
+                                            </button>
+                                            <button 
+                                                className="action-btn decline-btn"
+                                                onClick={() => handleDeclineRequest(request.friendship_id, `${request.name} ${request.surname}`)}
+                                            >
+                                                <img src={No} alt="Отклонить" width="16" height="16" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Секция списка друзей */}
+                    <div className="friends-section">
+                        <div className="section-header">
+                            <h2 className="section-title">Друзья</h2>
+                            <span className="friends-count">{friends.length} друзей</span>
+                        </div>
+                        {friends.length > 0 ? (
+                            <div className="friends-list">
+                                {friends.map(friend => (
+                                    <div key={friend.user_id} className="friend-card">
+                                        <div className="friend-avatar-container">
+                                            <div className="friend-avatar">
+                                                {getAvatarDisplay(friend)}
+                                            </div>
+                                            <div className={`status-dot ${friend.is_online ? 'online' : 'offline'}`}></div>
+                                        </div>
+                                        
+                                        <div className="friend-info">
+                                            <h3 className="friend-name">
+                                                {friend.name} {friend.surname}
+                                                {friend.nick && <span className="friend-nick"> (@{friend.nick})</span>}
+                                            </h3>
+                                            <span className="friend-status">
+                                                {friend.is_online ? 'В сети' : `Был(а) в сети ${new Date(friend.last_seen).toLocaleDateString()}`}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="friend-actions">
+                                            <button 
+                                                className="action-btn remove-btn"
+                                                onClick={() => handleRemoveFriend(friend.user_id, `${friend.name} ${friend.surname}`)}
+                                            >
+                                                <img src={Bin} alt="Удалить" width="16" height="16" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="no-friends">
+                                <p>У вас пока нет друзей. Найдите новых друзей с помощью поиска!</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
