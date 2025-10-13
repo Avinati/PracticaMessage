@@ -28,11 +28,11 @@ function App() {
         <Route path='/chat' element={<Chat />} />
         <Route path='/404' element={<ErrorPage />} />
         <Route path='/upload' element={<PostUpload />} />
-        {/* ДОБАВЬТЕ ЭТИ ДВА МАРШРУТА: */}
-        <Route path='/post/:postId' element={<PostPage />} /> {/* Для конкретного поста по ID */}
-        <Route path='/post' element={<PostPage />} /> {/* Для поста без ID (резервный) */}
+        
+        <Route path='/post/:postId' element={<PostPage />} /> 
+        <Route path='/post' element={<PostPage />} /> 
         <Route path='/frinds' element={<Frinds />} />
-        {/* Добавьте catch-all маршрут для 404 ошибок */}
+        
         <Route path='*' element={<ErrorPage />} />
       </Routes>
     </BrowserRouter>
