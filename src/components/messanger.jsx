@@ -1,38 +1,100 @@
-import React, { useState, useEffect } from "react";
-import Logo from '/public/Лого.png'
-import Fav from '/public/Fav.png'
-import Pfp from '/public/pfp.png'
-import ForYou from '/public/person.png'
-import Friends from '/public/friends.png'
-import Chat from '/public/chatred.png'
-import Set from '/public/settings.png'
-import './css/messanger.css'
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
+import Logo from '/public/Лого.png';
+import Fav from '/public/Fav.png';
+import Pfp from '/public/pfp.png';
+import ForYou from '/public/person.png';
+import Friends from '/public/friends.png';
+import Chat from '/public/chatred.png';
+// import SearchIcon from '/public/search.png';
+
+import './css/messanger.css';
 
 function Messenger() {
     const navigate = useNavigate();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [chats, setChats] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    const [socket, setSocket] = useState(null);
+    const [onlineUsers, setOnlineUsers] = useState(new Set());
 
-    const chats = [
-        { id: 1, name: "Алексей Петров", lastMessage: "Привет! Как дела?", unread: 2, online: true, time: "12:30" },
-        { id: 2, name: "Мария Иванова", lastMessage: "Встречаемся завтра?", unread: 0, online: true, time: "11:45" },
-        { id: 3, name: "Иван Сидоров", lastMessage: "Отправил файл", unread: 1, online: false, time: "10:20" },
-        { id: 4, name: "Екатерина Белова", lastMessage: "Спасибо за помощь!", unread: 0, online: true, time: "09:15" },
-        { id: 5, name: "Дмитрий Козлов", lastMessage: "Когда будет готово?", unread: 3, online: false, time: "08:30" }
-    ];
+    const socketRef = useRef(null);
 
     useEffect(() => {
         checkAuthentication();
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        };
     }, []);
+
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            initializeSocket();
+            loadChats();
+        }
+    }, [isAuthenticated, user]);
+
+    const initializeSocket = () => {
+        const token = localStorage.getItem('token');
+        const newSocket = io('http://localhost:5000', {
+            auth: {
+                token: token
+            }
+        });
+
+        newSocket.on('connect', () => {
+            console.log('✅ Подключен к серверу чатов');
+            newSocket.emit('authenticate', token);
+        });
+
+        newSocket.on('authenticated', () => {
+            console.log('✅ Аутентификация socket успешна');
+        });
+
+        newSocket.on('new_message', (message) => {
+            console.log('Новое сообщение:', message);
+            // Обновляем список чатов
+            loadChats();
+            // Можно добавить уведомление
+        });
+
+        newSocket.on('user_online', (data) => {
+            setOnlineUsers(prev => new Set([...prev, data.user_id]));
+        });
+
+        newSocket.on('user_offline', (data) => {
+            setOnlineUsers(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(data.user_id);
+                return newSet;
+            });
+        });
+
+        newSocket.on('chat_notification', (data) => {
+            // Показать уведомление
+            if (Notification.permission === 'granted') {
+                new Notification(`Новое сообщение от ${data.sender}`, {
+                    body: data.message,
+                    icon: Pfp
+                });
+            }
+        });
+
+        socketRef.current = newSocket;
+        setSocket(newSocket);
+    };
 
     const checkAuthentication = async () => {
         const token = localStorage.getItem('token');
-        console.log('Токен из localStorage:', token);
         
         if (!token) {
-            console.log('Токен не найден, перенаправляем на логин');
             setIsAuthenticated(false);
             setLoading(false);
             navigate('/login');
@@ -40,7 +102,6 @@ function Messenger() {
         }
 
         try {
-            console.log('Проверяем токен на сервере...');
             const response = await fetch('http://localhost:5000/api/auth/verify', {
                 method: 'GET',
                 headers: {
@@ -49,36 +110,13 @@ function Messenger() {
                 }
             });
 
-            console.log('Статус ответа verify:', response.status);
-
             if (response.ok) {
-                console.log('Токен валиден');
                 setIsAuthenticated(true);
-                
-                // Получаем актуальные данные пользователя
-                const profileResponse = await fetch('http://localhost:5000/api/users/profile', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (profileResponse.ok) {
-                    const userData = await profileResponse.json();
-                    setUser(userData.user);
-                    localStorage.setItem('user', JSON.stringify(userData.user));
-                    console.log('Данные пользователя обновлены:', userData.user);
-                } else {
-                    // Используем сохраненные данные если запрос профиля не удался
-                    const savedUser = localStorage.getItem('user');
-                    if (savedUser) {
-                        setUser(JSON.parse(savedUser));
-                        console.log('Используем сохраненные данные пользователя');
-                    }
+                const userData = localStorage.getItem('user');
+                if (userData) {
+                    setUser(JSON.parse(userData));
                 }
             } else {
-                console.log('Токен невалиден, очищаем localStorage');
                 setIsAuthenticated(false);
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
@@ -86,51 +124,127 @@ function Messenger() {
             }
         } catch (error) {
             console.error('Auth check error:', error);
-            // При ошибке сети проверяем есть ли сохраненные данные
-            const savedUser = localStorage.getItem('user');
-            if (savedUser) {
-                console.log('Ошибка сети, используем сохраненные данные');
-                setIsAuthenticated(true);
-                setUser(JSON.parse(savedUser));
-            } else {
-                setIsAuthenticated(false);
-                localStorage.removeItem('token');
-                navigate('/login');
-            }
+            setIsAuthenticated(false);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/login');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleChatClick = (chatId, chatName) => {
-        if (!isAuthenticated) {
-            alert('Войдите в аккаунт чтобы открыть чат');
-            navigate('/login');
-            return false;
+    const loadChats = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/api/chats', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setChats(data.chats);
+                
+                // Добавляем онлайн статусы
+                const onlineUserIds = new Set();
+                data.chats.forEach(chat => {
+                    chat.participants.forEach(participant => {
+                        if (participant.is_online) {
+                            onlineUserIds.add(participant.user_id);
+                        }
+                    });
+                });
+                setOnlineUsers(onlineUserIds);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки чатов:', error);
         }
-        // Переходим в конкретный чат
+    };
+
+    const searchUsers = async (query) => {
+        if (query.length < 2) {
+            setSearchResults([]);
+            setShowSearchResults(false);
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5000/api/users/search?query=${encodeURIComponent(query)}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setSearchResults(data.users);
+                setShowSearchResults(true);
+            }
+        } catch (error) {
+            console.error('Ошибка поиска пользователей:', error);
+        }
+    };
+
+    const createChat = async (participantId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/api/chats', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    participant_ids: [participantId],
+                    chat_type: 'private'
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setShowSearchResults(false);
+                setSearchQuery('');
+                // Переходим в созданный чат
+                navigate(`/chat/${data.chat.chat_id}`);
+            } else {
+                if (data.chat_id) {
+                    // Чат уже существует, переходим в него
+                    navigate(`/chat/${data.chat_id}`);
+                } else {
+                    alert(data.error || 'Ошибка создания чата');
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка создания чата:', error);
+            alert('Ошибка создания чата');
+        }
+    };
+
+    const handleChatClick = (chatId) => {
         navigate(`/chat/${chatId}`);
-        return true;
     };
 
-    const handleNewChat = () => {
-        if (!isAuthenticated) {
-            alert('Войдите в аккаунт чтобы создать новый чат');
-            navigate('/login');
-            return;
-        }
-        // Логика создания нового чата
-        alert('Функция создания нового чата будет доступна скоро');
-    };
+    const formatLastSeen = (lastSeen) => {
+        if (!lastSeen) return '';
+        const date = new Date(lastSeen);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
 
-    const handleSearchChats = (e) => {
-        if (!isAuthenticated) {
-            alert('Войдите в аккаунт чтобы искать чаты');
-            navigate('/login');
-            return;
-        }
-        // Логика поиска чатов
-        console.log('Поиск чатов:', e.target.value);
+        if (diffMins < 1) return 'только что';
+        if (diffMins < 60) return `${diffMins} мин назад`;
+        if (diffHours < 24) return `${diffHours} ч назад`;
+        if (diffDays < 7) return `${diffDays} дн назад`;
+        return date.toLocaleDateString();
     };
 
     if (loading) {
@@ -183,7 +297,6 @@ function Messenger() {
                             type="text" 
                             className="search-input" 
                             placeholder="Поиск..." 
-                            onFocus={() => !isAuthenticated && navigate('/login')}
                         />
                         <Link to="/favorite">
                             <button className="fav-btn">
@@ -191,16 +304,10 @@ function Messenger() {
                             </button>
                         </Link>
                         
-                        {/* Динамическая кнопка профиля */}
-                        <Link to={isAuthenticated ? "/profile" : "/login"}>
+                        <Link to="/profile">
                             <button className="pfp-btn">
-                                <img 
-                                    src={isAuthenticated ? (user?.avatar_url || Pfp) : Pfp} 
-                                    alt="Профиль" 
-                                />
-                                {isAuthenticated && user && (
-                                    <span className="user-online-dot"></span>
-                                )}
+                                <img src={user?.avatar_url || Pfp} alt="Профиль" />
+                                <span className="user-online-dot"></span>
                             </button>
                         </Link>
                     </div>
@@ -215,7 +322,7 @@ function Messenger() {
                             <p className="text">Для вас</p>
                         </Link>
                         
-                        <Link to="/frinds" className="menu-link">
+                        <Link to="/friends" className="menu-link">
                             <button className="friends-btn">
                                 <img src={Friends} alt="Друзья" />
                             </button>
@@ -238,64 +345,105 @@ function Messenger() {
                     </div>
                     
                     <div className="chats-container">
-                       
-                        
                         <div className="chats-controls">
-                            <input 
-                                type="text" 
-                                className="chats-search" 
-                                placeholder="Поиск чатов..." 
-                                onChange={handleSearchChats}
-                                onFocus={() => !isAuthenticated && navigate('/login')}
-                            />
-                            <button 
-                                className="new-chat-btn"
-                                onClick={handleNewChat}
-                            >
-                                + Новый чат
-                            </button>
+                            <div className="search-container">
+                                {/* <img src={SearchIcon} alt="Поиск" className="search-icon" /> */}
+                                <input 
+                                    type="text" 
+                                    className="chats-search" 
+                                    placeholder="Поиск пользователей..." 
+                                    value={searchQuery}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        searchUsers(e.target.value);
+                                    }}
+                                    onFocus={() => setShowSearchResults(true)}
+                                />
+                            </div>
                         </div>
+
+                        {showSearchResults && searchResults.length > 0 && (
+                            <div className="search-results">
+                                {searchResults.map(user => (
+                                    <div 
+                                        key={user.user_id} 
+                                        className="search-result-item"
+                                        onClick={() => createChat(user.user_id)}
+                                    >
+                                        <div className="user-avatar">
+                                            <img src={user.avatar_url || Pfp} alt="Аватар" />
+                                            <span className={`online-status ${onlineUsers.has(user.user_id) ? 'online' : 'offline'}`}></span>
+                                        </div>
+                                        <div className="user-info">
+                                            <div className="user-name">
+                                                {user.name} {user.surname}
+                                                {user.nick && <span className="user-nick">@{user.nick}</span>}
+                                            </div>
+                                            <div className="user-status">
+                                                {onlineUsers.has(user.user_id) ? 'в сети' : `был(а) ${formatLastSeen(user.last_seen)}`}
+                                            </div>
+                                        </div>
+                                        <button className="start-chat-btn">Начать чат</button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {showSearchResults && searchQuery.length >= 2 && searchResults.length === 0 && (
+                            <div className="no-results">
+                                Пользователи не найдены
+                            </div>
+                        )}
                         
                         <div className="chats-list">
                             {chats.length > 0 ? (
-                                chats.map(chat => (
-                                    <div 
-                                        key={chat.id} 
-                                        className={`chat-item ${chat.unread > 0 ? 'unread' : ''}`}
-                                        onClick={() => handleChatClick(chat.id, chat.name)}
-                                    >
-                                        {chat.unread > 0 && (
-                                            <span className="unread-badge">{chat.unread}</span>
-                                        )}
-                                        <div className="chat-avatar">
-                                            <img src={Pfp} alt="Аватар" />
-                                            <span className={`online-status ${chat.online ? 'online' : 'offline'}`}></span>
-                                        </div>
-                                        <div className="chat-info">
-                                            <div className="chat-header-info">
-                                                <span className="chat-name">{chat.name}</span>
-                                                <span className="chat-time">{chat.time}</span>
+                                chats.map(chat => {
+                                    const otherParticipant = chat.participants[0];
+                                    const isOnline = onlineUsers.has(otherParticipant?.user_id);
+                                    
+                                    return (
+                                        <div 
+                                            key={chat.chat_id} 
+                                            className={`chat-item ${chat.unread_count > 0 ? 'unread' : ''}`}
+                                            onClick={() => handleChatClick(chat.chat_id)}
+                                        >
+                                            {chat.unread_count > 0 && (
+                                                <span className="unread-badge">{chat.unread_count}</span>
+                                            )}
+                                            <div className="chat-avatar">
+                                                <img src={otherParticipant?.avatar_url || Pfp} alt="Аватар" />
+                                                <span className={`online-status ${isOnline ? 'online' : 'offline'}`}></span>
                                             </div>
-                                            <p className="chat-last-message">{chat.lastMessage}</p>
+                                            <div className="chat-info">
+                                                <div className="chat-header-info">
+                                                    <span className="chat-name">
+                                                        {chat.chat_type === 'private' 
+                                                            ? `${otherParticipant?.name} ${otherParticipant?.surname || ''}`
+                                                            : chat.chat_name
+                                                        }
+                                                    </span>
+                                                    <span className="chat-time">
+                                                        {chat.last_message_time 
+                                                            ? new Date(chat.last_message_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                                            : new Date(chat.created_at).toLocaleDateString()
+                                                        }
+                                                    </span>
+                                                </div>
+                                                <p className="chat-last-message">
+                                                    {chat.last_message || 'Чат создан'}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
+                                    );
+                                })
                             ) : (
                                 <div className="no-chats">
                                     <div className="no-chats-icon">💬</div>
                                     <h3>У вас пока нет чатов</h3>
-                                    <p>Начните общение, написав кому-нибудь!</p>
-                                    <button 
-                                        className="start-chat-btn"
-                                        onClick={handleNewChat}
-                                    >
-                                        Начать первый чат
-                                    </button>
+                                    <p>Начните общение, найдя пользователя через поиск!</p>
                                 </div>
                             )}
                         </div>
-                        
-                    
                     </div>
                 </div>
 
@@ -308,7 +456,7 @@ function Messenger() {
                                 <ul><Link to="/">Главная</Link></ul>
                                 <ul><Link to="/favorite">Избранное</Link></ul>
                                 <ul><Link to="/profile">Профиль</Link></ul>
-                                <ul><Link to="/frinds">Друзья</Link></ul>
+                                <ul><Link to="/friends">Друзья</Link></ul>
                                 <ul><Link to="/settings">Настройки</Link></ul>
                                 <ul><Link to="/messenger">Чаты</Link></ul>
                             </div>
@@ -325,7 +473,7 @@ function Messenger() {
                 </div>
             </div>
         </>
-    )
+    );
 }
 
 export default Messenger;

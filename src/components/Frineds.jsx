@@ -405,7 +405,7 @@ function Main() {
                     </Link>
                     
                     {isAuthenticated ? (
-                        <Link to="/messanger" className="menu-link">
+                        <Link to="/messenger" className="menu-link">
                             <button className="chat-btn">
                                 <img src={Chat} alt="Чаты" />
                             </button>
@@ -614,7 +614,7 @@ function Main() {
                             </ul>
                             <ul>
                                 {isAuthenticated ? (
-                                    <Link to="/messanger">Чаты</Link>
+                                    <Link to="/messenger">Чаты</Link>
                                 ) : (
                                     <span onClick={() => alert('Войдите в аккаунт')}>Чаты</span>
                                 )}

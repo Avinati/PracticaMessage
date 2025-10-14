@@ -1,30 +1,78 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
-import Logo from '/public/Лого.png'
-import Fav from '/public/Fav.png'
-import Pfp from '/public/pfp.png'
-import Plus from '/public/plus.png'
-import Send from '/public/send.png'
-import Back from '/public/back.png'
-import './css/chat.css'
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { io } from 'socket.io-client';
+import Logo from '/public/Лого.png';
+import Fav from '/public/Fav.png';
+import Pfp from '/public/pfp.png';
+import Send from '/public/send.png';
+import Back from '/public/back.png';
+import './css/chat.css';
 
 function Chat() {
     const navigate = useNavigate();
+    const { chatId } = useParams();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    
-    const [messages, setMessages] = useState([
-        { id: 1, text: "Привет! Как дела?", time: "12:30", isSent: false },
-        { id: 2, text: "Привет! Все отлично, спасибо! А у тебя?", time: "12:31", isSent: true },
-        { id: 3, text: "Тоже все хорошо! Хочешь встретиться завтра?", time: "12:32", isSent: false },
-    ]);
-    
+    const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
+    const [chat, setChat] = useState(null);
+    const [socket, setSocket] = useState(null);
+    const [avatarLoading, setAvatarLoading] = useState(true);
+    
+    const messagesEndRef = useRef(null);
+    const socketRef = useRef(null);
 
     useEffect(() => {
         checkAuthentication();
+        return () => {
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
+        };
     }, []);
+
+    useEffect(() => {
+        if (isAuthenticated && user && chatId) {
+            initializeSocket();
+            loadChat();
+            loadMessages();
+        }
+    }, [isAuthenticated, user, chatId]);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    const initializeSocket = () => {
+        const token = localStorage.getItem('token');
+        const newSocket = io('http://localhost:5000', {
+            auth: {
+                token: token
+            }
+        });
+
+        newSocket.on('connect', () => {
+            console.log('✅ Подключен к серверу чатов');
+            newSocket.emit('authenticate', token);
+            newSocket.emit('join_chat', chatId);
+        });
+
+        newSocket.on('new_message', (message) => {
+            setMessages(prev => [...prev, message]);
+        });
+
+        newSocket.on('messages_read', (data) => {
+            setMessages(prev => prev.map(msg => 
+                data.message_ids.includes(msg.message_id) 
+                    ? { ...msg, is_read: true, read_at: new Date() }
+                    : msg
+            ));
+        });
+
+        socketRef.current = newSocket;
+        setSocket(newSocket);
+    };
 
     const checkAuthentication = async () => {
         const token = localStorage.getItem('token');
@@ -68,29 +116,76 @@ function Chat() {
         }
     };
 
+    const loadChat = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5000/api/chats/${chatId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setChat(data.chat);
+            } else {
+                navigate('/messenger');
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки чата:', error);
+            navigate('/messenger');
+        }
+    };
+
+    const loadMessages = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5000/api/chats/${chatId}/messages?limit=100`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setMessages(data.messages);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки сообщений:', error);
+        }
+    };
+
     const handleSendMessage = (e) => {
         e.preventDefault();
-        if (newMessage.trim() === "") return;
+        if (newMessage.trim() === "" || !socket) return;
         
-        const newMsg = {
-            id: messages.length + 1,
-            text: newMessage,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isSent: true,
-            sender: user?.name || 'Вы'
-        };
-        
-        setMessages([...messages, newMsg]);
+        socket.emit('send_message', {
+            chat_id: parseInt(chatId),
+            content: newMessage.trim(),
+            message_type: 'text'
+        });
+
         setNewMessage("");
     };
 
-    const handleAttachFile = () => {
-        if (!isAuthenticated) {
-            alert('Войдите в аккаунт чтобы отправлять файлы');
-            return;
-        }
-        // Логика прикрепления файла
-        alert('Функция прикрепления файла будет доступна скоро');
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    const formatTime = (timestamp) => {
+        return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const handleAvatarLoad = () => {
+        setAvatarLoading(false);
+    };
+
+    const handleAvatarError = () => {
+        setAvatarLoading(false);
     };
 
     if (loading) {
@@ -112,7 +207,7 @@ function Chat() {
                             <Link to="/login">
                                 <button className="login-btn">Войти</button>
                             </Link>
-                            <Link to="/messanger">
+                            <Link to="/messenger">
                                 <button className="home-btn">К списку чатов</button>
                             </Link>
                         </div>
@@ -121,6 +216,8 @@ function Chat() {
             </div>
         );
     }
+
+    const otherParticipant = chat?.participants?.find(p => p.user_id !== user.user_id);
 
     return (
         <>
@@ -137,90 +234,89 @@ function Chat() {
                             </button>
                         </Link>
                         
-                        {/* Динамическая кнопка профиля */}
-                        {isAuthenticated ? (
-                            <Link to="/profile">
-                                <button className="pfp-btn">
-                                    <img src={user?.avatar_url || Pfp} alt="Профиль" />
-                                </button>
-                            </Link>
-                        ) : (
-                            <Link to="/login">
-                                <button className="pfp-btn">
-                                    <img src={Pfp} alt="Профиль" />
-                                </button>
-                            </Link>
-                        )}
+                        <Link to="/profile">
+                            <button className="pfp-btn">
+                                <img src={user?.avatar_url || Pfp} alt="Профиль" />
+                            </button>
+                        </Link>
                     </div>
                 </div>
 
                 <div className="content-wrapper">
                     <div className="chat-container">
                         <div className="chat-header">
-                            <Link to="/messanger">
+                            <Link to="/messenger">
                                 <button className="back-button">
                                     <img src={Back} alt="Назад" />
                                 </button>
                             </Link>
-                            <div className="chat-user-info">
-                                <div className="avatar-container">
-                                    <img src={Pfp} alt="Алексей Петров" className="chat-user-avatar" />
-                                    <span className="online-dot"></span>
+                            {chat && (
+                                <div className="chat-user-info">
+                                    <div className="avatar-container">
+                                        {avatarLoading && (
+                                            <div className="avatar-loading">Загрузка...</div>
+                                        )}
+                                        <img 
+                                            src={otherParticipant?.avatar_url || Pfp} 
+                                            alt={otherParticipant?.name} 
+                                            className={`chat-user-avatar ${avatarLoading ? 'avatar-hidden' : ''}`}
+                                            onLoad={handleAvatarLoad}
+                                            onError={handleAvatarError}
+                                        />
+                                        <span className={`online-dot ${otherParticipant?.is_online ? 'online' : 'offline'}`}></span>
+                                    </div>
+                                    <div className="chat-user-details">
+                                        <h3>
+                                            {chat.chat_type === 'private' 
+                                                ? `${otherParticipant?.name} ${otherParticipant?.surname || ''}`
+                                                : chat.chat_name
+                                            }
+                                        </h3>
+                                        <span className="status">
+                                            {otherParticipant?.is_online ? 'в сети' : 'не в сети'}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="chat-user-details">
-                                    <h3>Алексей Петров</h3>
-                                    <span className="status">в сети</span>
-                                </div>
-                            </div>
+                            )}
                         </div>
                         
                         <div className="messages-container">
-                           
-                            
                             {messages.map((message) => (
                                 <div 
-                                    key={message.id} 
-                                    className={`message ${message.isSent ? 'message-sent' : 'message-received'}`}
+                                    key={message.message_id} 
+                                    className={`message ${message.user_id === user.user_id ? 'message-sent' : 'message-received'}`}
                                 >
-                                    {!message.isSent && (
-                                        <img src={Pfp} alt="Аватар" className="message-avatar" />
-                                    )}
                                     <div className="message-content">
-                                        {!message.isSent && (
-                                            <span className="sender-name">Алексей Петров</span>
+                                        {message.user_id !== user.user_id && (
+                                            <span className="sender-name">
+                                                {message.name} {message.surname}
+                                            </span>
                                         )}
-                                        <p>{message.text}</p>
-                                        <span className="message-time">{message.time}</span>
+                                        <p>{message.content}</p>
+                                        <span className="message-time">
+                                            {formatTime(message.created_at)}
+                                            {message.is_edited && <span className="edited"> (ред.)</span>}
+                                        </span>
                                     </div>
-                                    {message.isSent && (
-                                        <img src={user?.avatar_url || Pfp} alt="Ваш аватар" className="message-avatar" />
-                                    )}
                                 </div>
                             ))}
+                            <div ref={messagesEndRef} />
                         </div>
                         
                         <form className="message-input-form" onSubmit={handleSendMessage}>
                             <div className="input-container">
-                                <button 
-                                    type="button" 
-                                    className="attach-button"
-                                    onClick={handleAttachFile}
-                                    disabled={!isAuthenticated}
-                                >
-                                    <img src={Plus} alt="Добавить файл" />
-                                </button>
                                 <input
                                     type="text"
                                     className="message-input"
-                                    placeholder={isAuthenticated ? "Введите сообщение..." : "Войдите в аккаунт чтобы писать..."}
+                                    placeholder="Введите сообщение..."
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
-                                    disabled={!isAuthenticated}
+                                    disabled={!socket}
                                 />
                                 <button 
                                     type="submit" 
                                     className="send-button"
-                                    disabled={!isAuthenticated || newMessage.trim() === ""}
+                                    disabled={!socket || newMessage.trim() === ""}
                                 >
                                     <img src={Send} alt="Отправить" />
                                 </button>
@@ -237,28 +333,10 @@ function Chat() {
                                 <li>Страницы</li>
                                 <ul><Link to="/">Главная</Link></ul>
                                 <ul><Link to="/favorite">Избранное</Link></ul>
-                                <ul>
-                                    {isAuthenticated ? (
-                                        <Link to="/profile">Профиль</Link>
-                                    ) : (
-                                        <span onClick={() => navigate('/login')}>Профиль</span>
-                                    )}
-                                </ul>
-                                <ul>
-                                    {isAuthenticated ? (
-                                        <Link to="/frinds">Друзья</Link>
-                                    ) : (
-                                        <span onClick={() => navigate('/login')}>Друзья</span>
-                                    )}
-                                </ul>
-                                <ul>
-                                    {isAuthenticated ? (
-                                        <Link to="/settings">Настройки</Link>
-                                    ) : (
-                                        <span onClick={() => navigate('/login')}>Настройки</span>
-                                    )}
-                                </ul>
-                                <ul><Link to="/messanger">Чаты</Link></ul>
+                                <ul><Link to="/profile">Профиль</Link></ul>
+                                <ul><Link to="/friends">Друзья</Link></ul>
+                                <ul><Link to="/settings">Настройки</Link></ul>
+                                <ul><Link to="/messenger">Чаты</Link></ul>
                             </div>
                             <div className="footer-column">
                                 <li>Документация</li>
@@ -273,7 +351,7 @@ function Chat() {
                 </div>
             </div>
         </>
-    )
+    );
 }
 
 export default Chat;

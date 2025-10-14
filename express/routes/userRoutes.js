@@ -26,6 +26,55 @@ const userRoutes = (pool, authenticateToken, upload) => {
     }
   });
 
+  // Получение профиля другого пользователя по ID
+  router.get('/profile/:userId', authenticateToken, async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      const [users] = await pool.execute(
+        `SELECT user_id, name, surname, nick, avatar_url, cover_url, 
+                is_online, last_seen, created_at,
+                (SELECT COUNT(*) FROM posts WHERE user_id = ? AND is_published = TRUE) as posts_count,
+                (SELECT COUNT(*) FROM friendships 
+                 WHERE (user_id1 = ? OR user_id2 = ?) AND status = 'accepted') as friends_count
+         FROM users 
+         WHERE user_id = ? AND is_active = TRUE`,
+        [userId, userId, userId, userId]
+      );
+
+      if (users.length === 0) {
+        return res.status(404).json({ error: 'Пользователь не найден' });
+      }
+
+      // Проверяем статус дружбы
+      const [friendship] = await pool.execute(
+        `SELECT status, action_user_id 
+         FROM friendships 
+         WHERE (user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)`,
+        [req.user.user_id, userId, userId, req.user.user_id]
+      );
+
+      let friendshipStatus = null;
+      let isRequestSentByMe = false;
+
+      if (friendship.length > 0) {
+        friendshipStatus = friendship[0].status;
+        isRequestSentByMe = friendship[0].action_user_id === req.user.user_id;
+      }
+
+      const userProfile = {
+        ...users[0],
+        friendship_status: friendshipStatus,
+        is_request_sent_by_me: isRequestSentByMe
+      };
+
+      res.json({ user: userProfile });
+    } catch (error) {
+      console.error('Get user profile error:', error);
+      res.status(500).json({ error: 'Ошибка получения профиля пользователя' });
+    }
+  });
+
   // Обновление профиля пользователя
   router.put('/profile', authenticateToken, async (req, res) => {
     try {
@@ -118,33 +167,182 @@ const userRoutes = (pool, authenticateToken, upload) => {
     }
   });
 
-  // Поиск пользователей
-  router.get('/search', authenticateToken, async (req, res) => {
+
+router.get('/search', authenticateToken, async (req, res) => {
+  try {
+    const query = req.query.query || '';
+    console.log('SEARCH TEST:', { query });
+
+    if (query.length < 2) {
+      return res.json({ 
+        users: [],
+        message: 'Слишком короткий запрос'
+      });
+    }
+
+    const searchQuery = `%${query}%`;
+    const userId = req.user.user_id;
+
+    // САМЫЙ ПРОСТОЙ ВОЗМОЖНЫЙ ЗАПРОС
+    const [users] = await pool.execute(
+      `SELECT user_id, name FROM users 
+       WHERE name LIKE ? AND user_id != ? 
+       LIMIT 10`,
+      [searchQuery, userId]
+    );
+
+    console.log('SEARCH RESULT:', users);
+
+    res.json({ 
+      success: true,
+      users: users 
+    });
+
+  } catch (error) {
+    console.error('SEARCH ERROR:', error.message);
+    res.status(500).json({ 
+      success: false,
+      error: 'Search failed: ' + error.message 
+    });
+  }
+});
+  // Поиск пользователей с фильтрацией по друзьям
+  router.get('/search/friends', authenticateToken, async (req, res) => {
     try {
-      const { query } = req.query;
-      
+      const { query, limit = 20 } = req.query;
+      const userId = req.user.user_id;
+
+      if (!query || query.length < 1) {
+        return res.status(400).json({ error: 'Поисковый запрос обязателен' });
+      }
+
+      const searchQuery = `%${query}%`;
+
+      const [friends] = await pool.execute(
+        `SELECT 
+          u.user_id, 
+          u.name, 
+          u.surname, 
+          u.nick, 
+          u.avatar_url, 
+          u.is_online, 
+          u.last_seen
+         FROM users u
+         WHERE (u.name LIKE ? OR u.surname LIKE ? OR u.nick LIKE ?)
+         AND u.is_active = TRUE
+         AND u.user_id IN (
+           SELECT user_id2 FROM friendships WHERE user_id1 = ? AND status = 'accepted'
+           UNION
+           SELECT user_id1 FROM friendships WHERE user_id2 = ? AND status = 'accepted'
+         )
+         ORDER BY u.is_online DESC, u.name ASC
+         LIMIT ?`,
+        [searchQuery, searchQuery, searchQuery, userId, userId, parseInt(limit)]
+      );
+
+      res.json({ users: friends });
+    } catch (error) {
+      console.error('Search friends error:', error);
+      res.status(500).json({ error: 'Ошибка поиска друзей' });
+    }
+  });
+
+  // Поиск пользователей для чата (исключая уже имеющиеся чаты)
+  router.get('/search/for-chat', authenticateToken, async (req, res) => {
+    try {
+      const { query, limit = 20 } = req.query;
+      const userId = req.user.user_id;
+
       if (!query || query.length < 2) {
         return res.status(400).json({ error: 'Поисковый запрос должен быть не менее 2 символов' });
       }
 
       const searchQuery = `%${query}%`;
+
       const [users] = await pool.execute(
-        `SELECT user_id, name, surname, nick, avatar_url, cover_url, is_online, last_seen 
-         FROM users 
-         WHERE (name LIKE ? OR surname LIKE ? OR nick LIKE ?) 
-         AND user_id != ? 
-         AND is_active = TRUE 
-         LIMIT 20`,
-        [searchQuery, searchQuery, searchQuery, req.user.user_id]
+        `SELECT 
+          u.user_id, 
+          u.name, 
+          u.surname, 
+          u.nick, 
+          u.avatar_url, 
+          u.is_online, 
+          u.last_seen
+         FROM users u
+         WHERE (u.name LIKE ? OR u.surname LIKE ? OR u.nick LIKE ?)
+         AND u.user_id != ? 
+         AND u.is_active = TRUE
+         AND u.user_id NOT IN (
+           SELECT cp.user_id 
+           FROM chat_participants cp
+           JOIN chats c ON cp.chat_id = c.chat_id
+           WHERE c.chat_id IN (
+             SELECT chat_id FROM chat_participants WHERE user_id = ?
+           )
+           AND c.chat_type = 'private'
+         )
+         ORDER BY u.is_online DESC, u.name ASC
+         LIMIT ?`,
+        [searchQuery, searchQuery, searchQuery, userId, userId, parseInt(limit)]
       );
 
       res.json({ users });
     } catch (error) {
-      console.error('Search error:', error);
-      res.status(500).json({ error: 'Ошибка поиска' });
+      console.error('Search for chat error:', error);
+      res.status(500).json({ error: 'Ошибка поиска пользователей для чата' });
     }
   });
 
+  // Получение рекомендуемых пользователей
+  router.get('/suggested', authenticateToken, async (req, res) => {
+    try {
+      const { limit = 10 } = req.query;
+      const userId = req.user.user_id;
+
+      const [suggestedUsers] = await pool.execute(
+        `SELECT 
+          u.user_id, 
+          u.name, 
+          u.surname, 
+          u.nick, 
+          u.avatar_url, 
+          u.is_online,
+          u.last_seen,
+          COUNT(DISTINCT f.user_id1) as mutual_friends_count
+         FROM users u
+         LEFT JOIN friendships f1 ON (
+           (f1.user_id1 = u.user_id AND f1.user_id2 IN (
+             SELECT user_id2 FROM friendships WHERE user_id1 = ? AND status = 'accepted'
+             UNION 
+             SELECT user_id1 FROM friendships WHERE user_id2 = ? AND status = 'accepted'
+           )) OR 
+           (f1.user_id2 = u.user_id AND f1.user_id1 IN (
+             SELECT user_id2 FROM friendships WHERE user_id1 = ? AND status = 'accepted'
+             UNION 
+             SELECT user_id1 FROM friendships WHERE user_id2 = ? AND status = 'accepted'
+           ))
+         ) AND f1.status = 'accepted'
+         WHERE u.user_id != ? 
+         AND u.is_active = TRUE
+         AND u.user_id NOT IN (
+           SELECT user_id2 FROM friendships WHERE user_id1 = ?
+           UNION
+           SELECT user_id1 FROM friendships WHERE user_id2 = ?
+         )
+         GROUP BY u.user_id
+         ORDER BY mutual_friends_count DESC, u.created_at DESC
+         LIMIT ?`,
+        [userId, userId, userId, userId, userId, userId, userId, parseInt(limit)]
+      );
+
+      res.json({ users: suggestedUsers });
+    } catch (error) {
+      console.error('Get suggested users error:', error);
+      res.status(500).json({ error: 'Ошибка получения рекомендуемых пользователей' });
+    }
+  });
+
+  // ... остальные ваши маршруты (посты, друзья, лайки и т.д.) остаются без изменений
   // Создание поста
   router.post('/posts', authenticateToken, async (req, res) => {
     console.log('=== СОЗДАНИЕ ПОСТА ===');
@@ -289,7 +487,7 @@ const userRoutes = (pool, authenticateToken, upload) => {
   // Управление друзьями
 
   // Отправка запроса в друзья
-router.post('/friends/request', authenticateToken, async (req, res) => {
+  router.post('/friends/request', authenticateToken, async (req, res) => {
     try {
         const { targetUserId } = req.body;
         const userId = req.user.user_id;
@@ -330,10 +528,10 @@ router.post('/friends/request', authenticateToken, async (req, res) => {
         console.error('Friend request error:', error);
         res.status(500).json({ error: 'Ошибка отправки запроса в друзья' });
     }
-});
+  });
 
   // Принятие запроса в друзья
- router.post('/friends/accept', authenticateToken, async (req, res) => {
+  router.post('/friends/accept', authenticateToken, async (req, res) => {
     try {
         const { friendshipId } = req.body;
         const userId = req.user.user_id;
@@ -359,10 +557,10 @@ router.post('/friends/request', authenticateToken, async (req, res) => {
         console.error('Accept friend request error:', error);
         res.status(500).json({ error: 'Ошибка принятия запроса в друзья' });
     }
-});
+  });
 
   // Отклонение запроса в друзья
- router.post('/friends/decline', authenticateToken, async (req, res) => {
+  router.post('/friends/decline', authenticateToken, async (req, res) => {
     try {
         const { friendshipId } = req.body;
         const userId = req.user.user_id;
@@ -387,10 +585,10 @@ router.post('/friends/request', authenticateToken, async (req, res) => {
         console.error('Decline friend request error:', error);
         res.status(500).json({ error: 'Ошибка отклонения запроса в друзья' });
     }
-});
+  });
 
-// Добавление поста в избранное
-router.post('/posts/:postId/favorite', authenticateToken, async (req, res) => {
+  // Добавление поста в избранное
+  router.post('/posts/:postId/favorite', authenticateToken, async (req, res) => {
     try {
         const { postId } = req.params;
         const userId = req.user.user_id;
@@ -429,10 +627,10 @@ router.post('/posts/:postId/favorite', authenticateToken, async (req, res) => {
         console.error('Add to favorites error:', error);
         res.status(500).json({ error: 'Ошибка добавления в избранное' });
     }
-});
+  });
 
-// Удаление поста из избранного
-router.delete('/posts/:postId/favorite', authenticateToken, async (req, res) => {
+  // Удаление поста из избранного
+  router.delete('/posts/:postId/favorite', authenticateToken, async (req, res) => {
     try {
         const { postId } = req.params;
         const userId = req.user.user_id;
@@ -454,39 +652,39 @@ router.delete('/posts/:postId/favorite', authenticateToken, async (req, res) => 
         console.error('Remove from favorites error:', error);
         res.status(500).json({ error: 'Ошибка удаления из избранного' });
     }
-});
+  });
 
-// Получение конкретного поста по ID
-router.get('/posts/:postId', authenticateToken, async (req, res) => {
-  try {
-    const { postId } = req.params;
-    const userId = req.user.user_id;
+  // Получение конкретного поста по ID
+  router.get('/posts/:postId', authenticateToken, async (req, res) => {
+    try {
+      const { postId } = req.params;
+      const userId = req.user.user_id;
 
-    const [posts] = await pool.execute(
-      `SELECT p.*, 
-              u.name, u.surname, u.nick, u.avatar_url, u.cover_url,
-              (SELECT COUNT(*) FROM post_likes WHERE post_id = p.post_id) as likes_count,
-              (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comments_count,
-              EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.post_id AND user_id = ?) as is_liked
-       FROM posts p
-       JOIN users u ON p.user_id = u.user_id
-       WHERE p.post_id = ? AND p.is_published = TRUE`,
-      [userId, postId]
-    );
+      const [posts] = await pool.execute(
+        `SELECT p.*, 
+                u.name, u.surname, u.nick, u.avatar_url, u.cover_url,
+                (SELECT COUNT(*) FROM post_likes WHERE post_id = p.post_id) as likes_count,
+                (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) as comments_count,
+                EXISTS(SELECT 1 FROM post_likes WHERE post_id = p.post_id AND user_id = ?) as is_liked
+         FROM posts p
+         JOIN users u ON p.user_id = u.user_id
+         WHERE p.post_id = ? AND p.is_published = TRUE`,
+        [userId, postId]
+      );
 
-    if (posts.length === 0) {
-      return res.status(404).json({ error: 'Пост не найден' });
+      if (posts.length === 0) {
+        return res.status(404).json({ error: 'Пост не найден' });
+      }
+
+      res.json({ post: posts[0] });
+    } catch (error) {
+      console.error('Get post error:', error);
+      res.status(500).json({ error: 'Ошибка загрузки поста' });
     }
+  });
 
-    res.json({ post: posts[0] });
-  } catch (error) {
-    console.error('Get post error:', error);
-    res.status(500).json({ error: 'Ошибка загрузки поста' });
-  }
-});
-
-// Проверка, добавлен ли пост в избранное
-router.get('/posts/:postId/favorite/check', authenticateToken, async (req, res) => {
+  // Проверка, добавлен ли пост в избранное
+  router.get('/posts/:postId/favorite/check', authenticateToken, async (req, res) => {
     try {
         const { postId } = req.params;
         const userId = req.user.user_id;
@@ -503,10 +701,10 @@ router.get('/posts/:postId/favorite/check', authenticateToken, async (req, res) 
         console.error('Check favorite error:', error);
         res.status(500).json({ error: 'Ошибка проверки избранного' });
     }
-});
+  });
 
-// Получение избранных постов пользователя
-router.get('/favorites/posts', authenticateToken, async (req, res) => {
+  // Получение избранных постов пользователя
+  router.get('/favorites/posts', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.user_id;
 
@@ -530,8 +728,7 @@ router.get('/favorites/posts', authenticateToken, async (req, res) => {
         console.error('Get favorites error:', error);
         res.status(500).json({ error: 'Ошибка загрузки избранных постов' });
     }
-});
-
+  });
 
   // Удаление из друзей
   router.delete('/friends/remove', authenticateToken, async (req, res) => {
@@ -556,7 +753,7 @@ router.get('/favorites/posts', authenticateToken, async (req, res) => {
         console.error('Remove friend error:', error);
         res.status(500).json({ error: 'Ошибка удаления из друзей' });
     }
-});
+  });
 
   // Получение списка друзей
   router.get('/friends', authenticateToken, async (req, res) => {
@@ -581,7 +778,7 @@ router.get('/favorites/posts', authenticateToken, async (req, res) => {
         console.error('Get friends error:', error);
         res.status(500).json({ error: 'Ошибка загрузки списка друзей' });
     }
-});
+  });
 
   // Получение входящих запросов в друзья
   router.get('/friends/requests', authenticateToken, async (req, res) => {
@@ -613,7 +810,7 @@ router.get('/favorites/posts', authenticateToken, async (req, res) => {
         console.error('Get friend requests error:', error);
         res.status(500).json({ error: 'Ошибка загрузки запросов в друзья' });
     }
-});
+  });
 
   return router;
 };

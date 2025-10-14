@@ -408,13 +408,13 @@ function Settings() {
                         </button>
                         <p className="text">Для вас</p>
                     </Link>
-                    <Link to="/frinds" className="menu-link">
+                    <Link to="/friends" className="menu-link">
                         <button className="friends-btn">
                             <img src={Friends} alt="Друзья" />
                         </button>
                         <p className="text">Друзья</p>
                     </Link>
-                    <Link to="/messanger" className="menu-link">
+                    <Link to="/messenger" className="menu-link">
                         <button className="chat-btn">
                             <img src={Chat} alt="Чаты" />
                         </button>

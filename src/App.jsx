@@ -10,9 +10,9 @@ import Register from './components/register'
 import PostPage from './components/postPage'
 import PostUpload from './components/postUpload'
 import Settings from './components/settings'
-import Messanger from './components/messanger'
+import Messenger from './components/messanger' // исправлена опечатка
 import Profile from './components/profile'
-import Frinds from './components/Frineds'
+import Friends from './components/Frineds' // исправлена опечатка
 
 function App() {
   return (
@@ -24,14 +24,14 @@ function App() {
         <Route path='/favorite' element={<Favorite />} />
         <Route path='/profile' element={<Profile />} /> 
         <Route path='/settings' element={<Settings />} />
-        <Route path='/messanger' element={<Messanger />} />
-        <Route path='/chat' element={<Chat />} />
+        <Route path='/messenger' element={<Messenger />} /> {/* исправлено messanger -> messenger */}
+        <Route path='/chat/:chatId' element={<Chat />} /> {/* добавлен параметр chatId */}
         <Route path='/404' element={<ErrorPage />} />
         <Route path='/upload' element={<PostUpload />} />
         
         <Route path='/post/:postId' element={<PostPage />} /> 
         <Route path='/post' element={<PostPage />} /> 
-        <Route path='/frinds' element={<Frinds />} />
+        <Route path='/friends' element={<Friends />} /> {/* исправлено frinds -> friends */}
         
         <Route path='*' element={<ErrorPage />} />
       </Routes>

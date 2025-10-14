@@ -5,6 +5,8 @@ dotenv.config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
+const http = require('http');
+const socketIo = require('socket.io');
 const port = process.env.PORT || 5000;
 const multer = require('multer');
 const path = require('path');
@@ -27,6 +29,15 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
+});
+
+// Создаем HTTP сервер для socket.io
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"]
+  }
 });
 
 // Функция проверки подключения к БД
@@ -113,6 +124,156 @@ app.use('/api/auth', authRoutes);
 const userRoutes = require('./routes/userRoutes')(pool, authenticateToken, upload);
 app.use('/api/users', userRoutes);
 
+// Маршруты чатов
+const chatRoutes = require('./routes/chatRoutes')(pool, authenticateToken);
+app.use('/api/chats', chatRoutes);
+
+// Socket.io подключения
+const connectedUsers = new Map();
+
+io.on('connection', (socket) => {
+  console.log('🔌 Новое подключение:', socket.id);
+
+  // Аутентификация пользователя
+  socket.on('authenticate', async (token) => {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+      
+      const [users] = await pool.execute(
+        'SELECT user_id, name, surname, nick, email, role, is_active, avatar_url FROM users WHERE user_id = ?',
+        [decoded.userId]
+      );
+
+      if (users.length > 0 && users[0].is_active) {
+        const user = users[0];
+        connectedUsers.set(user.user_id, socket.id);
+        socket.userId = user.user_id;
+        
+        // Обновляем статус онлайн
+        await pool.execute(
+          'UPDATE users SET is_online = TRUE, last_seen = CURRENT_TIMESTAMP WHERE user_id = ?',
+          [user.user_id]
+        );
+
+        // Уведомляем других пользователей
+        socket.broadcast.emit('user_online', {
+          user_id: user.user_id,
+          is_online: true
+        });
+
+        console.log(`✅ Пользователь ${user.name} аутентифицирован`);
+      }
+    } catch (error) {
+      console.error('Ошибка аутентификации socket:', error);
+    }
+  });
+
+  // Присоединение к комнате чата
+  socket.on('join_chat', (chatId) => {
+    socket.join(`chat_${chatId}`);
+    console.log(`Пользователь присоединился к чату: ${chatId}`);
+  });
+
+  // Отправка сообщения
+  socket.on('send_message', async (data) => {
+    try {
+      const { chat_id, content, message_type = 'text', attachment_url = null } = data;
+      
+      // Сохраняем сообщение в БД
+      const [result] = await pool.execute(
+        `INSERT INTO messages (chat_id, user_id, content, message_type, attachment_url) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [chat_id, socket.userId, content, message_type, attachment_url]
+      );
+
+      // Получаем полные данные сообщения
+      const [messages] = await pool.execute(
+        `SELECT m.*, u.name, u.surname, u.nick, u.avatar_url 
+         FROM messages m 
+         JOIN users u ON m.user_id = u.user_id 
+         WHERE m.message_id = ?`,
+        [result.insertId]
+      );
+
+      const message = messages[0];
+
+      // Обновляем время последней активности чата
+      await pool.execute(
+        'UPDATE chats SET last_activity = CURRENT_TIMESTAMP WHERE chat_id = ?',
+        [chat_id]
+      );
+
+      // Отправляем сообщение всем участникам чата
+      io.to(`chat_${chat_id}`).emit('new_message', message);
+      
+      // Уведомляем участников чата о новом сообщении
+      const [participants] = await pool.execute(
+        'SELECT user_id FROM chat_participants WHERE chat_id = ? AND user_id != ?',
+        [chat_id, socket.userId]
+      );
+
+      participants.forEach(participant => {
+        const participantSocketId = connectedUsers.get(participant.user_id);
+        if (participantSocketId) {
+          io.to(participantSocketId).emit('chat_notification', {
+            chat_id,
+            message: content,
+            sender: message.name
+          });
+        }
+      });
+
+    } catch (error) {
+      console.error('Ошибка отправки сообщения:', error);
+      socket.emit('message_error', { error: 'Не удалось отправить сообщение' });
+    }
+  });
+
+  // Отметка сообщений как прочитанных
+  socket.on('mark_as_read', async (data) => {
+    try {
+      const { chat_id, message_ids } = data;
+      
+      await pool.execute(
+        `UPDATE messages SET is_read = TRUE, read_at = CURRENT_TIMESTAMP 
+         WHERE message_id IN (?) AND chat_id = ?`,
+        [message_ids, chat_id]
+      );
+
+      // Уведомляем других участников
+      socket.to(`chat_${chat_id}`).emit('messages_read', {
+        chat_id,
+        message_ids,
+        reader_id: socket.userId
+      });
+
+    } catch (error) {
+      console.error('Ошибка отметки сообщений:', error);
+    }
+  });
+
+  // Отключение пользователя
+  socket.on('disconnect', async () => {
+    if (socket.userId) {
+      connectedUsers.delete(socket.userId);
+      
+      // Обновляем статус офлайн
+      await pool.execute(
+        'UPDATE users SET is_online = FALSE, last_seen = CURRENT_TIMESTAMP WHERE user_id = ?',
+        [socket.userId]
+      );
+
+      // Уведомляем других пользователей
+      socket.broadcast.emit('user_offline', {
+        user_id: socket.userId,
+        is_online: false
+      });
+
+      console.log(`❌ Пользователь отключился: ${socket.userId}`);
+    }
+  });
+});
+
 // Тестовые endpoint'ы
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API работает!' });
@@ -137,7 +298,7 @@ app.use((error, req, res, next) => {
 });
 
 // Запуск сервера
-app.listen(port, async () => {
+server.listen(port, async () => {
   console.log('🚀 Сервер запущен на порту: ' + port);
   await checkConnection();
   console.log('✅ Маршруты зарегистрированы:');
@@ -148,5 +309,9 @@ app.listen(port, async () => {
   console.log('   PUT  /api/users/profile');
   console.log('   POST /api/users/upload');
   console.log('   DELETE /api/users/delete-account');
+  console.log('   GET  /api/chats');
+  console.log('   POST /api/chats');
+  console.log('   GET  /api/chats/:id/messages');
+  console.log('   GET  /api/users/search');
   console.log('   GET  /api/test');
 });

@@ -216,7 +216,7 @@ function Main() {
                     
                     {/* Проверяем авторизацию для друзей */}
                     {isAuthenticated ? (
-                        <Link to="/frinds" className="menu-link">
+                        <Link to="/friends" className="menu-link">
                             <button className="friends-btn">
                                 <img src={Friends} alt="Друзья" />
                             </button>
@@ -233,7 +233,7 @@ function Main() {
                     
                     {/* Проверяем авторизацию для чатов */}
                     {isAuthenticated ? (
-                        <Link to="/messanger" className="menu-link">
+                        <Link to="/messenger" className="menu-link">
                             <button className="chat-btn">
                                 <img src={Chat} alt="Чаты" />
                             </button>
@@ -460,7 +460,7 @@ function Main() {
                             </ul>
                             <ul>
                                 {isAuthenticated ? (
-                                    <Link to="/frinds">Друзья</Link>
+                                    <Link to="/friends">Друзья</Link>
                                 ) : (
                                     <span onClick={() => alert('Войдите в аккаунт')}>Друзья</span>
                                 )}
@@ -474,7 +474,7 @@ function Main() {
                             </ul>
                             <ul>
                                 {isAuthenticated ? (
-                                    <Link to="/messanger">Чаты</Link>
+                                    <Link to="/messenger">Чаты</Link>
                                 ) : (
                                     <span onClick={() => alert('Войдите в аккаунт')}>Чаты</span>
                                 )}
