@@ -9,10 +9,21 @@ function Profile() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [favoritePosts, setFavoritePosts] = useState([]);
+    const [friends, setFriends] = useState([]);
+    const [postsLoading, setPostsLoading] = useState(true);
+    const [friendsLoading, setFriendsLoading] = useState(true);
 
     useEffect(() => {
         fetchUserProfile();
     }, []);
+
+    useEffect(() => {
+        if (user) {
+            fetchFavoritePosts();
+            fetchFriends();
+        }
+    }, [user]);
 
     const fetchUserProfile = async () => {
         try {
@@ -40,6 +51,76 @@ function Profile() {
             console.error('Ошибка загрузки профиля:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchFavoritePosts = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/api/users/favorites/posts', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки избранных постов');
+            }
+
+            const data = await response.json();
+            setFavoritePosts(data.favorites || []);
+        } catch (err) {
+            console.error('Ошибка загрузки избранных постов:', err);
+            setFavoritePosts([]);
+        } finally {
+            setPostsLoading(false);
+        }
+    };
+
+    const fetchFriends = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('http://localhost:5000/api/users/friends', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки друзей');
+            }
+
+            const data = await response.json();
+            setFriends(data.friends || []);
+        } catch (err) {
+            console.error('Ошибка загрузки друзей:', err);
+            setFriends([]);
+        } finally {
+            setFriendsLoading(false);
+        }
+    };
+
+    const handleRemoveFavorite = async (postId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5000/api/users/posts/${postId}/favorite`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                // Удаляем пост из локального состояния
+                setFavoritePosts(prev => prev.filter(post => post.post_id !== postId));
+            }
+        } catch (err) {
+            console.error('Ошибка удаления из избранного:', err);
         }
     };
 
@@ -90,7 +171,6 @@ function Profile() {
                 </div>
                 
                 <div className="main-profile">
-                    {/* Обновленный profile-hero с исправлениями */}
                     <div 
                         className="profile-hero"
                         style={{
@@ -102,7 +182,6 @@ function Profile() {
                             position: 'relative'
                         }}
                     >
-                        {/* Затемнение для лучшей читаемости текста поверх фона */}
                         <div className="profile-hero-overlay"></div>
                         
                         <div className="profile-hero-content">
@@ -121,6 +200,10 @@ function Profile() {
                                     <p className="user-status">
                                         {user.is_online ? 'Online' : `Был(а) ${formatLastSeen(user.last_seen)}`}
                                     </p>
+                                    <div className="profile-stats">
+                                        <span>{friends.length} друзей</span>
+                                        <span>{favoritePosts.length} избранных постов</span>
+                                    </div>
                                 </div>
                             </div>
                             <div className="profile-info">
@@ -143,60 +226,122 @@ function Profile() {
                     <div className="cosmic-grid">
                         <div className="timeline-constellation">
                             <div className="timeline-header">
-                                <h2>Лента</h2> 
+                                <h2>Посты</h2> 
                             </div>
                             
                             <div className="timeline-content">
-                                <div className="post-header">
-                                    <div className="post-identity">
-                                        <img 
-                                            className="avatar-nova" 
-                                            src={user.avatar_url || "./Аватарка.png"} 
-                                            alt="Аватар"
-                                            onError={(e) => {
-                                                e.target.src = "./Аватарка.png";
-                                            }}
-                                        />
-                                        <h2 className="username-pulsar">@{user.nick || user.email.split('@')[0]}</h2>
-                                        <img className="star-favorite" src="./favpost1.png" alt="Избранное" />
+                                {postsLoading ? (
+                                    <div className="loading-posts">Загрузка избранных постов...</div>
+                                ) : favoritePosts.length === 0 ? (
+                                    <div className="no-posts">
+                                        <p>У вас пока нет избранных постов</p>
+                                        <Link to="/">
+                                            <button className="discover-posts-btn">
+                                                Найти интересные посты
+                                            </button>
+                                        </Link>
                                     </div>
-                                </div>
-                                <div className="post-universe">
-                                    <img className="post-supernova" src="./haha.png" alt="Пост" />
-                                </div>
-                                <div className="post-actions">
-                                    <img className="action-meteor" src="./like.png" alt="Лайк" />
-                                    <img className="action-meteor" src="./comm.png" alt="Комментарий" />
-                                    <img className="action-meteor" src="./share.png" alt="Поделиться" />
-                                </div>
+                                ) : (
+                                    favoritePosts.map(post => (
+                                        <div key={post.post_id} className="favorite-post">
+                                            <div className="post-header">
+                                                <div className="post-identity">
+                                                    <img 
+                                                        className="avatar-nova" 
+                                                        src={post.avatar_url || "./Аватарка.png"} 
+                                                        alt="Аватар"
+                                                        onError={(e) => {
+                                                            e.target.src = "./Аватарка.png";
+                                                        }}
+                                                    />
+                                                    <h2 className="username-pulsar">@{post.nick || 'пользователь'}</h2>
+                                                    <button 
+                                                        className="remove-favorite-btn"
+                                                        onClick={() => handleRemoveFavorite(post.post_id)}
+                                                        title="Удалить из избранного"
+                                                    >
+                                                        ❌
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="post-content">
+                                                {post.title && <h3 className="post-title">{post.title}</h3>}
+                                                <p className="post-text">{post.content}</p>
+                                                {post.image_url && (
+                                                    <div className="post-universe">
+                                                        <img className="post-supernova" src={post.image_url} alt="Пост" />
+                                                    </div>
+                                                )}
+                                                {post.video_url && (
+                                                    <div className="post-video">
+                                                        <video controls className="post-supernova">
+                                                            <source src={post.video_url} type="video/mp4" />
+                                                        </video>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="post-stats">
+                                                <span className="post-likes">❤️ {post.likes_count || 0}</span>
+                                                <span className="post-comments">💬 {post.comments_count || 0}</span>
+                                                <span className="post-date">
+                                                    {formatPostDate(post.favorited_at || post.created_at)}
+                                                </span>
+                                            </div>
+                                            <div className="post-actions">
+                                                <img className="action-meteor" src="./like.png" alt="Лайк" />
+                                                <img className="action-meteor" src="./comm.png" alt="Комментарий" />
+                                                <img className="action-meteor" src="./share.png" alt="Поделиться" />
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </div>
 
                         <div className="allies-constellation">
                             <div className="allies-header">
-                                <h2>Союзники</h2> 
+                                <h2>Друзья</h2> 
+                                <span className="friends-count">({friends.length})</span>
                             </div>
 
                             <div className="allies-content">
-                                <div className="allies-cluster">
-                                    <div className="ally-comet">
-                                        <img 
-                                            className="avatar-satellite" 
-                                            src={user.avatar_url || "./Аватарка.png"} 
-                                            alt="Аватар союзника"
-                                            onError={(e) => {
-                                                e.target.src = "./Аватарка.png";
-                                            }}
-                                        />
-                                        <div className="ally-info">
-                                            <h3>@{user.nick || user.email.split('@')[0]}</h3>
-                                            <p>{user.is_online ? 'Online' : `Был(а) ${formatLastSeen(user.last_seen)}`}</p>
-                                        </div>
-                                        <button className="message-stargate">
-                                            <img className="comet-message" src="./chat1.png" alt="Написать" />
-                                        </button>
+                                {friendsLoading ? (
+                                    <div className="loading-friends">Загрузка друзей...</div>
+                                ) : friends.length === 0 ? (
+                                    <div className="no-friends">
+                                        <p>У вас пока нет друзей</p>
+                                        <Link to="/search">
+                                            <button className="find-friends-btn">
+                                                Найти друзей
+                                            </button>
+                                        </Link>
                                     </div>
-                                </div>
+                                ) : (
+                                    <div className="allies-cluster">
+                                        {friends.map(friend => (
+                                            <div key={friend.user_id} className="ally-comet">
+                                                <img 
+                                                    className="avatar-satellite" 
+                                                    src={friend.avatar_url || "./Аватарка.png"} 
+                                                    alt="Аватар союзника"
+                                                    onError={(e) => {
+                                                        e.target.src = "./Аватарка.png";
+                                                    }}
+                                                />
+                                                <div className="ally-info">
+                                                    <h3>{friend.name} {friend.surname}</h3>
+                                                    <p>@{friend.nick || friend.email?.split('@')[0]}</p>
+                                                    <p className="friend-status">
+                                                        {friend.is_online ? 'Online' : `Был(а) ${formatLastSeen(friend.last_seen)}`}
+                                                    </p>
+                                                </div>
+                                                <button className="message-stargate">
+                                                    <img className="comet-message" src="./chat1.png" alt="Написать" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -246,6 +391,17 @@ function formatLastSeen(lastSeen) {
     
     const diffInDays = Math.floor(diffInHours / 24);
     return `${diffInDays} дн назад`;
+}
+
+function formatPostDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'только что';
+    if (diffInHours < 24) return `${diffInHours} ч назад`;
+    
+    return date.toLocaleDateString('ru-RU');
 }
 
 export default Profile;

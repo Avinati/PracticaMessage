@@ -10,10 +10,12 @@ function PostUpload() {
     const navigate = useNavigate();
     const [postData, setPostData] = useState({
         title: "",
-        content: ""
+        content: "",
+        image: null
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
+    const [imagePreview, setImagePreview] = useState(null);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -21,6 +23,43 @@ function PostUpload() {
             ...prev,
             [name]: value
         }));
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Проверка типа файла
+            if (!file.type.startsWith('image/')) {
+                setMessage("Пожалуйста, выберите изображение");
+                return;
+            }
+
+            // Проверка размера файла (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                setMessage("Размер изображения не должен превышать 5MB");
+                return;
+            }
+
+            setPostData(prev => ({
+                ...prev,
+                image: file
+            }));
+
+            // Создание превью
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setImagePreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = () => {
+        setPostData(prev => ({
+            ...prev,
+            image: null
+        }));
+        setImagePreview(null);
     };
 
     const handleSubmit = async (e) => {
@@ -47,6 +86,31 @@ function PostUpload() {
         setMessage("");
 
         try {
+            let imageUrl = null;
+
+            // Если есть изображение, загружаем его сначала
+            if (postData.image) {
+                const formData = new FormData();
+                formData.append('file', postData.image);
+
+                const uploadResponse = await fetch('http://localhost:5000/api/users/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const uploadData = await uploadResponse.json();
+
+                if (!uploadResponse.ok) {
+                    throw new Error(uploadData.error || 'Ошибка загрузки изображения');
+                }
+
+                imageUrl = uploadData.fileUrl;
+            }
+
+            // Создаем пост с изображением
             const response = await fetch('http://localhost:5000/api/users/posts', {
                 method: 'POST',
                 headers: {
@@ -56,6 +120,7 @@ function PostUpload() {
                 body: JSON.stringify({
                     title: postData.title.trim(),
                     content: postData.content.trim(),
+                    image_url: imageUrl,
                     is_public: true
                 })
             });
@@ -64,7 +129,8 @@ function PostUpload() {
 
             if (response.ok) {
                 setMessage("Пост успешно опубликован!");
-                setPostData({ title: "", content: "" });
+                setPostData({ title: "", content: "", image: null });
+                setImagePreview(null);
                 
                 // Перенаправляем на главную через 1.5 секунды
                 setTimeout(() => {
@@ -75,14 +141,14 @@ function PostUpload() {
             }
         } catch (error) {
             console.error('Post creation error:', error);
-            setMessage("Ошибка при создании поста");
+            setMessage(error.message || "Ошибка при создании поста");
         } finally {
             setLoading(false);
         }
     };
 
     const handleCancel = () => {
-        if (postData.title.trim() || postData.content.trim()) {
+        if (postData.title.trim() || postData.content.trim() || postData.image) {
             if (window.confirm('Вы уверены, что хотите отменить создание поста? Все несохраненные данные будут потеряны.')) {
                 navigate('/');
             }
@@ -92,7 +158,7 @@ function PostUpload() {
     };
 
     const handleAddMedia = () => {
-        alert("Функция добавления медиа будет реализована в будущем");
+        document.getElementById('image-upload').click();
     };
 
     return (
@@ -124,6 +190,15 @@ function PostUpload() {
                     </div>
                 )}
 
+                {/* Скрытый input для загрузки изображений */}
+                <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{ display: 'none' }}
+                />
+
                 {/* Поле для заголовка */}
                 <input
                     type="text"
@@ -138,6 +213,23 @@ function PostUpload() {
                 <div className="char-counter">
                     {postData.title.length}/200 символов
                 </div>
+
+                {/* Превью изображения */}
+                {imagePreview && (
+                    <div className="image-preview-container">
+                        <div className="image-preview">
+                            <img src={imagePreview} alt="Превью" />
+                            <button 
+                                type="button" 
+                                className="remove-image-btn"
+                                onClick={removeImage}
+                                disabled={loading}
+                            >
+                                ×
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <textarea 
                     className="textarr" 
@@ -161,7 +253,7 @@ function PostUpload() {
                         disabled={loading}
                     >
                         <span className="plus-icon">+</span>
-                        Добавить медиа
+                        {postData.image ? "Заменить изображение" : "Добавить изображение"}
                     </button>
                     <div className="btn-group">
                         <button 

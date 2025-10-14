@@ -1,14 +1,21 @@
 /* ================================ ОСНОВНОЙ КОНТЕЙНЕР =========================================== */
 
-
 html, body {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     background-color: #F2E8CF;
-    font-family:'Equilibrist';
+    font-family: 'Equilibrist';
     color: #386641;
-    height: 100%; 
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* Скрываем скроллбар но оставляем функциональность */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    width: 0;
+    display: none;
 }
 
 /* ================================ Контейнер для меню =========================================== */
@@ -50,7 +57,7 @@ html, body {
     margin-bottom: 0;
 }
 
-.foryou-btn, .frinds-btn, .chat-btn, .set-btn {
+.foryou-btn, .friends-btn, .chat-btn, .set-btn {
     background: none;
     border: none;
     padding: 5px;
@@ -59,11 +66,11 @@ html, body {
     margin-right: 15px;
 }
 
-.foryou-btn:hover, .frinds-btn:hover, .chat-btn:hover, .set-btn:hover {
+.foryou-btn:hover, .friends-btn:hover, .chat-btn:hover, .set-btn:hover {
     opacity: 0.7;
 }
 
-.foryou-btn img, .frinds-btn img, .chat-btn img, .set-btn img {
+.foryou-btn img, .friends-btn img, .chat-btn img, .set-btn img {
     width: 40px;
     height: 40px;
     display: block;
@@ -76,11 +83,9 @@ html, body {
     flex-grow: 1;
 }
 
-.text1
-{
+.text1 {
     color: #BC4749;
 }
-
 
 /* ================================ ЛЕНТА НОВОСТЕЙ =========================================== */
 
@@ -89,79 +94,583 @@ html, body {
     width: calc(100% - 390px);
     margin-bottom: 55px;
 }
+
 .news-items {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    width: 1250px;
+    gap: 25px;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* ОСНОВНЫЕ СТИЛИ КАРТОЧКИ ПОСТА */
+.post-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
 }
 
 .news-item {
-    background-color: #DAD1BA;
-    border-radius: 12px;
-    padding: 20px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    background: #A7C957;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12);
+    width: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #90b23f;
+    position: relative;
 }
 
 .news-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+}
+
+.news-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+}
+
+.welcome-post {
+    border-left: 4px solid #ffd700;
+}
+
+/* Заголовок поста */
+.news-author {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 25px 30px 15px 30px;
+    background: transparent;
+}
+
+.author-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.author-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    margin-right: 12px;
 }
 
 .news-author {
     display: flex;
-    align-items: center;
-    margin-bottom: 15px;
+    align-items: flex-start;
+    gap: 12px;
 }
 
-.author-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 12px;
-    border: 2px solid #6A994E;
+.author-details {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .author-name {
-    font-weight: bold;
-    color: #386641;
+    font-weight: 600;
+    color: #2d5016;
     font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.post-time {
+    font-size: 0.85rem;
+    color: #5a7a32;
+    margin-top: 2px;
+}
+
+/* Заголовок поста */
+.post-title {
+    padding: 0 30px 15px 30px;
+    margin-bottom: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.post-title h3 {
+    font-size: 1.4rem;
+    color: #2d5016;
+    margin: 0;
+    line-height: 1.4;
+    font-weight: 600;
+}
+
+/* Контент поста */
+.news-content {
+    padding: 20px 30px;
+    position: relative;
 }
 
 .news-content p {
-    margin: 0 0 15px 0;
-    line-height: 1.5;
-    color: #495057;
+    margin: 0 0 18px 0;
+    color: #2d5016;
+    line-height: 1.6;
+    font-size: 16px;
+    text-align: left;
 }
 
-.news-image {
-    height: 200px;
-    background-color: #E9ECEF;
-    border-radius: 8px;
-    margin-bottom: 15px;
+.welcome-hint {
+    font-style: italic;
+    color: #5a7a32 !important;
+    font-size: 14px !important;
+    margin-top: 10px !important;
+}
+
+/* Контейнер для изображения */
+.post-image-container {
+    width: 100%;
+    margin: 20px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.post-image {
+    width: 100%;
+}
+
+.post-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+}
+
+.post-video {
+    width: 100%;
+    margin: 20px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.post-video video {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+}
+
+.placeholder-image {
+    width: 100%;
+    height: 280px;
+    background: linear-gradient(135deg, #90b23f 0%, #A7C957 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6C757D;
+    color: white;
+    font-weight: 500;
+    font-size: 20px;
+    border-radius: 12px;
 }
 
+/* Статистика поста */
+.post-stats {
+    padding: 0 30px 15px 30px;
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    color: #5a7a32;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.likes-count, .comments-count {
+    font-weight: 500;
+}
+
+/* Панель действий */
 .news-actions {
     display: flex;
+    align-items: center;
     gap: 15px;
-    padding-top: 15px;
+    justify-content: flex-start;
+    padding: 18px 30px 25px 30px;
+    margin-top: 0;
 }
 
 .like-btn, .comment-btn, .share-btn {
-    background: none;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     cursor: pointer;
-    transition: background-color 0.2s;
-    font-size: 14px;
-    color: #6C757D;
+    padding: 10px 16px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-size: 15px;
+    color: #2d5016;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
 }
 
-.like-btn:active, .comment-btn:active, .share-btn:active {
-    transform: scale(0.95);
+.like-btn:hover, .comment-btn:hover, .share-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.like-btn.liked {
+    background: rgba(220, 53, 69, 0.1);
+    border-color: rgba(220, 53, 69, 0.3);
+}
+
+.like-btn img, .comment-btn img, .share-btn img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.like-btn:hover img, .comment-btn:hover img, .share-btn:hover img {
+    transform: scale(1.1);
+}
+
+.like-btn.liked img {
+    filter: invert(27%) sepia(85%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+}
+
+.like-btn span, .comment-btn span, .share-btn span {
+    font-weight: 600;
+    font-size: 15px;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Стили для загрузки и ошибок */
+.loading-posts {
+    text-align: center;
+    padding: 60px 20px;
+    background: #A7C957;
+    border-radius: 18px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #2d5016;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-posts p {
+    color: #2d5016;
+    margin: 0;
+}
+
+/* Промо блок для авторизации */
+.auth-promo {
+    background: #A7C957;
+    border-radius: 18px;
+    padding: 40px 30px;
+    text-align: center;
+    border: 1px solid #90b23f;
+}
+
+.auth-promo-content h3 {
+    color: #2d5016;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+.auth-promo-content p {
+    color: #5a7a32;
+    margin-bottom: 25px;
+    font-size: 16px;
+}
+
+.auth-promo-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: #2d5016;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.auth-promo-btn:hover {
+    background: #1a2f0d;
+}
+
+/* Анимация для лайков */
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.news-item.removing {
+    animation: fadeOut 0.3s ease forwards;
+}
+
+/* Стили для статуса загрузки внутри карточки */
+.like-btn.loading, .comment-btn.loading, .share-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.like-btn.loading img, .comment-btn.loading img, .share-btn.loading img {
+    animation: spin 1s linear infinite;
+}
+
+
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+    .content-wrapper {
+        margin: 0 80px;
+        margin-top: 55px;
+    }
+    
+    .news-items {
+        max-width: 700px;
+    }
+}
+
+@media (max-width: 992px) {
+    .content-wrapper {
+        margin: 0 40px;
+        margin-top: 55px;
+        gap: 30px;
+    }
+    
+    .menu {
+        width: 300px;
+    }
+    
+    .news-feed {
+        width: calc(100% - 330px);
+    }
+    
+    .news-items {
+        max-width: 600px;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        flex-direction: column;
+        margin: 0 20px;
+        margin-top: 55px;
+        gap: 20px;
+    }
+    
+    .menu {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 15px 10px;
+    }
+    
+    .menu-link {
+        flex-direction: column;
+        text-align: center;
+        margin-bottom: 0;
+        padding: 10px 5px;
+    }
+    
+    .menu-link p {
+        font-size: 14px;
+        margin-top: 5px;
+    }
+    
+    .foryou-btn, .friends-btn, .chat-btn, .set-btn {
+        margin-right: 0;
+        margin-bottom: 5px;
+    }
+    
+    .news-feed {
+        width: 100%;
+    }
+    
+    .news-items {
+        max-width: 100%;
+    }
+    
+    .news-item {
+        border-radius: 15px;
+    }
+    
+    .news-author,
+    .news-content,
+    .news-actions {
+        padding: 20px;
+    }
+    
+    .post-title {
+        padding: 0 20px 15px 20px;
+    }
+    
+    .post-image img,
+    .placeholder-image {
+        min-height: 220px;
+        height: 220px;
+    }
+    
+    .news-actions {
+        gap: 12px;
+        justify-content: space-between;
+    }
+    
+    .like-btn, .comment-btn, .share-btn {
+        padding: 8px 12px;
+        font-size: 14px;
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .like-btn img, .comment-btn img, .share-btn img {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .author-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .author-name {
+        font-size: 15px;
+    }
+    
+    .header-container {
+        padding: 0 15px;
+    }
+    
+    .search-input {
+        max-width: 300px;
+        margin: 0 15px;
+    }
+    
+    .footer-columns {
+        gap: 40px;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .footer-column {
+        align-items: center;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .content-wrapper {
+        margin: 0 15px;
+        margin-top: 55px;
+    }
+    
+    .menu {
+        padding: 10px 5px;
+    }
+    
+    .menu-link {
+        padding: 8px 3px;
+    }
+    
+    .menu-link p {
+        font-size: 12px;
+    }
+    
+    .foryou-btn img, .friends-btn img, .chat-btn img, .set-btn img {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .news-author,
+    .news-content,
+    .news-actions {
+        padding: 15px;
+    }
+    
+    .post-title {
+        padding: 0 15px 10px 15px;
+    }
+    
+    .post-title h3 {
+        font-size: 1.2rem;
+    }
+    
+    .news-content p {
+        font-size: 15px;
+    }
+    
+    .placeholder-image {
+        height: 180px;
+        font-size: 16px;
+    }
+    
+    .news-actions {
+        flex-wrap: wrap;
+    }
+    
+    .like-btn, .comment-btn, .share-btn {
+        flex: 0 0 calc(33.333% - 8px);
+        min-width: auto;
+    }
+    
+    .header-container {
+        padding: 0 10px;
+    }
+    
+    .search-input {
+        max-width: 200px;
+        margin: 0 10px;
+        padding: 8px 12px;
+    }
+    
+    .logo {
+        height: 30px;
+    }
+    
+    .fav-btn img, .pfp-btn img {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+/* Улучшения для скроллинга */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.news-feed {
+    overflow-y: auto;
+}
+
+.news-feed::-webkit-scrollbar {
+    width: 0;
+    display: none;
 }
