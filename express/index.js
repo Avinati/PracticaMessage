@@ -12,6 +12,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+
 // Создаем папку для загрузок если её нет
 const uploadsDir = './uploads';
 if (!fs.existsSync(uploadsDir)) {
@@ -59,9 +60,13 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
+
+
 
 // Middleware аутентификации
 const authenticateToken = async (req, res, next) => {
@@ -90,6 +95,8 @@ const authenticateToken = async (req, res, next) => {
     return res.status(403).json({ error: 'Неверный токен' });
   }
 };
+
+const adminRoutes = require('./routes/adminRoutes')(pool, authenticateToken);
 
 // Настройка multer для загрузки файлов
 const storage = multer.diskStorage({
@@ -123,6 +130,8 @@ app.use('/api/auth', authRoutes);
 // Маршруты пользователей
 const userRoutes = require('./routes/userRoutes')(pool, authenticateToken, upload);
 app.use('/api/users', userRoutes);
+
+app.use('/api/admin', adminRoutes);
 
 // Маршруты чатов
 const chatRoutes = require('./routes/chatRoutes')(pool, authenticateToken);
@@ -302,16 +311,23 @@ server.listen(port, async () => {
   console.log('🚀 Сервер запущен на порту: ' + port);
   await checkConnection();
   console.log('✅ Маршруты зарегистрированы:');
-  console.log('   POST /api/auth/register');
-  console.log('   POST /api/auth/login');
-  console.log('   GET  /api/auth/verify');
-  console.log('   GET  /api/users/profile');
-  console.log('   PUT  /api/users/profile');
-  console.log('   POST /api/users/upload');
-  console.log('   DELETE /api/users/delete-account');
-  console.log('   GET  /api/chats');
-  console.log('   POST /api/chats');
-  console.log('   GET  /api/chats/:id/messages');
-  console.log('   GET  /api/users/search');
-  console.log('   GET  /api/test');
+console.log('   POST /api/auth/register');
+console.log('   POST /api/auth/login');
+console.log('   GET  /api/auth/verify');
+console.log('   GET  /api/users/profile');
+console.log('   PUT  /api/users/profile');
+console.log('   POST /api/users/upload');
+console.log('   DELETE /api/users/delete-account');
+console.log('   GET  /api/chats');
+console.log('   POST /api/chats');
+console.log('   GET  /api/chats/:id/messages');
+console.log('   GET  /api/users/search');
+console.log('   GET  /api/admin/stats');
+console.log('   GET  /api/admin/users');
+console.log('   POST /api/admin/users/:userId/toggle-ban');
+console.log('   GET  /api/admin/posts');
+console.log('   POST /api/admin/posts/:postId/toggle-publish');
+console.log('   DELETE /api/admin/posts/:postId');
+console.log('   GET  /api/admin/chats');
+console.log('   GET  /api/test');
 });

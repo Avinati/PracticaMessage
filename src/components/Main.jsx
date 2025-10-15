@@ -10,8 +10,9 @@ import Like from '/public/like.png'
 import Comm from '/public/comm.png'
 import Liked from '/public/liked.png' 
 import Share from '/public/share.png'
+import AdminIcon from '/public/admin.png' // Добавьте эту иконку
 import './css/Main.css'
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 function Main() {
     const navigate = useNavigate();
@@ -20,6 +21,7 @@ function Main() {
     const [loading, setLoading] = useState(true);
     const [posts, setPosts] = useState([]);
     const [postsLoading, setPostsLoading] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         checkAuthentication();
@@ -51,19 +53,23 @@ function Main() {
             });
 
             if (response.ok) {
+                const data = await response.json();
                 setIsAuthenticated(true);
-                const userData = localStorage.getItem('user');
-                if (userData) {
-                    setUser(JSON.parse(userData));
-                }
+                setUser(data.user);
+                setIsAdmin(data.user.role === 'admin');
+                
+                // Сохраняем пользователя в localStorage
+                localStorage.setItem('user', JSON.stringify(data.user));
             } else {
                 setIsAuthenticated(false);
+                setIsAdmin(false);
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
             }
         } catch (error) {
             console.error('Auth check error:', error);
             setIsAuthenticated(false);
+            setIsAdmin(false);
             localStorage.removeItem('token');
             localStorage.removeItem('user');
         } finally {
@@ -264,13 +270,15 @@ function Main() {
                             <p className="text">Настройки</p>
                         </div>
                     )}
+
+                    {/* Ссылка на админ-панель только для админов */}
+                    
                 </div>
                 
                 <div className="news-feed">
                     <div className="news-items">
                         {/* Приветственный пост для авторизованных пользователей */}
                         {isAuthenticated && posts.length === 0 && !postsLoading && (
-                            <Link to = '/post/:postId'>
                             <div className="news-item welcome-post">
                                 <div className="news-author">
                                     <img src={user?.avatar_url || Pfp} alt="Автор" className="author-avatar" />
@@ -281,7 +289,6 @@ function Main() {
                                     <p className="welcome-hint">Добавьте друзей чтобы видеть их посты!</p>
                                 </div>
                             </div>
-                            </Link>
                         )}
 
                         {/* Загрузка постов */}
@@ -479,6 +486,16 @@ function Main() {
                                     <span onClick={() => alert('Войдите в аккаунт')}>Чаты</span>
                                 )}
                             </ul>
+                            
+                            {/* Ссылка на админ-панель только для админов */}
+                            {isAdmin && (
+                                <ul>
+                                    <Link to="/admin" className="admin-link">
+                                        
+                                        Админ-панель
+                                    </Link>
+                                </ul>
+                            )}
                         </div>
                         <div className="footer-column">
                             <li>Документация</li>
@@ -487,6 +504,7 @@ function Main() {
                             <ul>Политика куки</ul>
                             <ul>Политика конфиденциальности</ul>
                             <ul>О нас</ul>
+                           
                         </div>
                     </div>
                 </div>
