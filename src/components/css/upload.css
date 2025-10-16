@@ -1,3 +1,13 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #F2E8CF;
+    font-family: 'Equilibrist';
+    color: #386641;
+    height: 100%;
+    overflow-y: auto;
+}
 .upload-main-lol
 {
     background-color: #A7C957;
@@ -9,6 +19,7 @@
 
 .textarr
 {
+    background-color: #F2E8CF;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -20,6 +31,14 @@
     font-size: 16px;
     resize: vertical;
     margin-bottom: 20px;
+    margin-top: 10px;
+}
+
+.title-input{
+    background-color: #F2E8CF;
+    border: none;
+    border-radius: 5px;
+    margin-bottom: 10px;
 }
 
 .btnn-use

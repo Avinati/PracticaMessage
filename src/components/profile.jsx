@@ -201,8 +201,8 @@ function Profile() {
                                         {user.is_online ? 'Online' : `Был(а) ${formatLastSeen(user.last_seen)}`}
                                     </p>
                                     <div className="profile-stats">
-                                        <span>{friends.length} друзей</span>
-                                        <span>{favoritePosts.length} избранных постов</span>
+                                        <span className="fri">{friends.length} друзей</span>
+                                        <span className="posts">{favoritePosts.length} избранных постов</span>
                                     </div>
                                 </div>
                             </div>

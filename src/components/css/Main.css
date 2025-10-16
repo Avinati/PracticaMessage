@@ -145,14 +145,17 @@ body::-webkit-scrollbar {
 .news-author {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    /* align-items: flex-start; */
+    gap: 8px;
     padding: 25px 30px 15px 30px;
     background: transparent;
 }
 
 .author-info {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex: 1;
 }
 
 .author-avatar {
@@ -160,8 +163,7 @@ body::-webkit-scrollbar {
     height: 45px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    margin-right: 12px;
+    border: 2px solid #386641;
 }
 
 .news-author {
@@ -193,7 +195,7 @@ body::-webkit-scrollbar {
 .post-title {
     padding: 0 30px 15px 30px;
     margin-bottom: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid #386641;
 }
 
 .post-title h3 {
@@ -232,7 +234,7 @@ body::-webkit-scrollbar {
     border-radius: 12px;
     overflow: hidden;
     background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid #386641;
 }
 
 .post-image {
@@ -282,7 +284,7 @@ body::-webkit-scrollbar {
     gap: 20px;
     font-size: 14px;
     color: #5a7a32;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid #386641;
 }
 
 .likes-count, .comments-count {
@@ -361,7 +363,7 @@ body::-webkit-scrollbar {
     width: 40px;
     height: 40px;
     border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top: 4px solid #2d5016;
+    border-top: 4px solid #386641;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 20px;

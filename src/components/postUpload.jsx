@@ -183,14 +183,12 @@ function PostUpload() {
             </div>
 
             <div className="upload-main-lol">
-                {/* Сообщение об ошибке/успехе */}
                 {message && (
                     <div className={`upload-message ${message.includes('успешно') ? 'success' : 'error'}`}>
                         {message}
                     </div>
                 )}
 
-                {/* Скрытый input для загрузки изображений */}
                 <input
                     id="image-upload"
                     type="file"
@@ -199,7 +197,6 @@ function PostUpload() {
                     style={{ display: 'none' }}
                 />
 
-                {/* Поле для заголовка */}
                 <input
                     type="text"
                     name="title"

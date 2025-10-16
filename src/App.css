@@ -131,3 +131,15 @@ html, body
     list-style: none;
     padding: 0;
 }
+
+.footer-column a {
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+.footer-column a:hover,
+.footer-column a:focus,
+.footer-column a:active {
+    color: inherit !important;
+    text-decoration: none !important;
+}

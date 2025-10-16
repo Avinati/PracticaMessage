@@ -10,6 +10,10 @@
 
 /* Исправления для кликабельности кнопок */
 
+.posts{
+    margin-left: 10px;
+}
+
 .profile-hero {
     position: relative;
     min-height: 300px;
@@ -94,15 +98,8 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.quantum-settings:hover,
-.nebula-chat:hover {
-    background: white;
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-}
 
 .settings-portal,
 .chat-wormhole {
@@ -111,7 +108,6 @@
     object-fit: contain;
 }
 
-/* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
     .profile-hero-content {
         flex-direction: column;
@@ -156,7 +152,7 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    background-color: #A7C957; /* Фолбэк цвет если нет обложки */
+    background-color: #A7C957;
     height: 200px;
     border-radius: 15px;
     padding: 25px;
