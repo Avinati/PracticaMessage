@@ -3,7 +3,6 @@ const express = require('express');
 const chatRoutes = (pool, authenticateToken) => {
   const router = express.Router();
 
-  // Получение списка чатов пользователя
   router.get('/', authenticateToken, async (req, res) => {
     try {
       const [chats] = await pool.execute(
@@ -25,7 +24,6 @@ const chatRoutes = (pool, authenticateToken) => {
         [req.user.user_id, req.user.user_id]
       );
 
-      // Получаем информацию об участниках для каждого чата
       for (let chat of chats) {
         const [participants] = await pool.execute(
           `SELECT 
@@ -45,7 +43,6 @@ const chatRoutes = (pool, authenticateToken) => {
     }
   });
 
-  // Создание нового чата
   router.post('/', authenticateToken, async (req, res) => {
     try {
       const { participant_ids, chat_name = null } = req.body;
@@ -54,7 +51,6 @@ const chatRoutes = (pool, authenticateToken) => {
         return res.status(400).json({ error: 'Укажите участников чата' });
       }
 
-      // Проверяем существование пользователей
       const placeholders = participant_ids.map(() => '?').join(',');
       const [users] = await pool.execute(
         `SELECT user_id FROM users WHERE user_id IN (${placeholders})`,
@@ -65,7 +61,6 @@ const chatRoutes = (pool, authenticateToken) => {
         return res.status(404).json({ error: 'Один или несколько пользователей не найдены' });
       }
 
-      // Проверяем, не существует ли уже приватный чат с этими участниками
       if (participant_ids.length === 1) {
         const [existingChats] = await pool.execute(
           `SELECT c.chat_id 
@@ -86,7 +81,6 @@ const chatRoutes = (pool, authenticateToken) => {
         }
       }
 
-      // Создаем чат
       const [chatResult] = await pool.execute(
         'INSERT INTO chats (chat_type, chat_name, created_by) VALUES (?, ?, ?)',
         [participant_ids.length === 1 ? 'private' : 'group', chat_name, req.user.user_id]
@@ -94,7 +88,6 @@ const chatRoutes = (pool, authenticateToken) => {
 
       const chatId = chatResult.insertId;
 
-      // Добавляем участников
       const participants = [req.user.user_id, ...participant_ids];
       const participantValues = participants.map(userId => [chatId, userId, userId === req.user.user_id]);
       
@@ -105,7 +98,6 @@ const chatRoutes = (pool, authenticateToken) => {
         );
       }
 
-      // Получаем данные созданного чата
       const [newChat] = await pool.execute(
         `SELECT 
           c.chat_id,
@@ -118,7 +110,6 @@ const chatRoutes = (pool, authenticateToken) => {
         [chatId]
       );
 
-      // Получаем участников
       const [participantsData] = await pool.execute(
         `SELECT 
           u.user_id, u.name, u.surname, u.nick, u.avatar_url, u.is_online
@@ -159,7 +150,6 @@ router.get('/:chatId/messages', authenticateToken, async (req, res) => {
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
 
-    // Используем альтернативный синтаксис LIMIT
     const [messages] = await pool.execute(
       `SELECT 
         m.message_id,
@@ -182,7 +172,7 @@ router.get('/:chatId/messages', authenticateToken, async (req, res) => {
        WHERE m.chat_id = ?
        ORDER BY m.created_at ASC 
        LIMIT ${limitNum} OFFSET ${(pageNum - 1) * limitNum}`,
-      [chatIdNum] // передаем только chatId
+      [chatIdNum]
     );
 
     res.json({
@@ -199,7 +189,7 @@ router.get('/:chatId/messages', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Ошибка при получении сообщений' });
   }
 });
-  // Получение информации о чате
+
   router.get('/:chatId', authenticateToken, async (req, res) => {
     try {
       const { chatId } = req.params;
@@ -223,7 +213,6 @@ router.get('/:chatId/messages', authenticateToken, async (req, res) => {
 
       const chat = chats[0];
 
-      // Получаем участников
       const [participants] = await pool.execute(
         `SELECT 
           u.user_id, u.name, u.surname, u.nick, u.avatar_url, u.is_online, u.last_seen

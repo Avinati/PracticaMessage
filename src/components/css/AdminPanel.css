@@ -1,8 +1,18 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #F2E8CF;
+    font-family: 'Equilibrist';
+    color: #386641;
+    height: 100%;
+    overflow-y: auto;
+}
+
 .admin-panel {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #F2E8CF;
   padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .admin-panel.loading {
@@ -11,16 +21,15 @@
   align-items: center;
   height: 100vh;
   font-size: 1.5rem;
-  color: #666;
+  color: #386641;
 }
 
 .admin-header {
-  background: white;
+  background: #6A994E;
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e1e5e9;
 }
 
 .admin-header h1 {
@@ -33,7 +42,7 @@
 .admin-tabs {
   display: flex;
   gap: 8px;
-  border-bottom: 1px solid #e1e5e9;
+  border-bottom: 1px solid #386641;
   padding-bottom: 0;
 }
 
@@ -41,7 +50,7 @@
   padding: 12px 24px;
   border: none;
   background: transparent;
-  color: #6c757d;
+  color: #386641;
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
@@ -52,14 +61,13 @@
 }
 
 .tab-btn:hover {
-  background-color: #f8f9fa;
-  color: #495057;
+  background-color: #BC4749;
+  color: #F2E8CF;
 }
 
 .tab-btn.active {
-  background-color: #007bff;
-  color: white;
-  border-bottom: 2px solid #007bff;
+  background-color: #386641;
+  color: #F2E8CF;
 }
 
 /* Статистика */
@@ -71,11 +79,10 @@
 }
 
 .stat-card {
-  background: white;
+  background: #A7C957;
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e1e5e9;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -102,7 +109,7 @@
 
 /* Секции админ-панели */
 .admin-section {
-  background: white;
+  background: #A7C957;
   border-radius: 12px;
   padding: 24px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
@@ -124,12 +131,12 @@
 }
 
 .admin-table th {
-  background-color: #f8f9fa;
-  color: #495057;
+  background-color: #6A994E;
+  color: #386641;
   font-weight: 600;
   padding: 16px 12px;
   text-align: left;
-  border-bottom: 2px solid #e1e5e9;
+  border-bottom: 2px solid #386641;
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -137,7 +144,7 @@
 
 .admin-table td {
   padding: 16px 12px;
-  border-bottom: 1px solid #e1e5e9;
+  border-bottom: 1px solid #386641;
   color: #495057;
 }
 
@@ -146,7 +153,7 @@
 }
 
 .admin-table tbody tr:hover {
-  background-color: #f8f9fa;
+  background-color: #6A994E;
 }
 
 .admin-table tbody tr:last-child td {

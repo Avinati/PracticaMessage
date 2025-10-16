@@ -7,7 +7,7 @@ import Pfp from '/public/pfp.png';
 import ForYou from '/public/person.png';
 import Friends from '/public/friends.png';
 import Chat from '/public/chatred.png';
-// import SearchIcon from '/public/search.png';
+import setting from '/public/settings.png'
 
 import './css/messanger.css';
 
@@ -60,9 +60,7 @@ function Messenger() {
 
         newSocket.on('new_message', (message) => {
             console.log('Новое сообщение:', message);
-            // Обновляем список чатов
             loadChats();
-            // Можно добавить уведомление
         });
 
         newSocket.on('user_online', (data) => {
@@ -78,7 +76,6 @@ function Messenger() {
         });
 
         newSocket.on('chat_notification', (data) => {
-            // Показать уведомление
             if (Notification.permission === 'granted') {
                 new Notification(`Новое сообщение от ${data.sender}`, {
                     body: data.message,
@@ -147,8 +144,6 @@ function Messenger() {
             if (response.ok) {
                 const data = await response.json();
                 setChats(data.chats);
-                
-                // Добавляем онлайн статусы
                 const onlineUserIds = new Set();
                 data.chats.forEach(chat => {
                     chat.participants.forEach(participant => {
@@ -211,11 +206,9 @@ function Messenger() {
             if (response.ok) {
                 setShowSearchResults(false);
                 setSearchQuery('');
-                // Переходим в созданный чат
                 navigate(`/chat/${data.chat.chat_id}`);
             } else {
                 if (data.chat_id) {
-                    // Чат уже существует, переходим в него
                     navigate(`/chat/${data.chat_id}`);
                 } else {
                     alert(data.error || 'Ошибка создания чата');
@@ -338,7 +331,7 @@ function Messenger() {
                         
                         <Link to="/settings" className="menu-link">
                             <button className="set-btn">
-                                <img src={Set} alt="Настройки" />
+                                <img src={setting} alt="Настройки" />
                             </button>
                             <p className="text">Настройки</p>
                         </Link>
@@ -347,7 +340,6 @@ function Messenger() {
                     <div className="chats-container">
                         <div className="chats-controls">
                             <div className="search-container">
-                                {/* <img src={SearchIcon} alt="Поиск" className="search-icon" /> */}
                                 <input 
                                     type="text" 
                                     className="chats-search" 

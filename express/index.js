@@ -13,13 +13,11 @@ const path = require('path');
 const fs = require('fs');
 
 
-// Создаем папку для загрузок если её нет
 const uploadsDir = './uploads';
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Подключение к базе данных
 const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
@@ -32,7 +30,6 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// Создаем HTTP сервер для socket.io
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
@@ -41,7 +38,6 @@ const io = socketIo(server, {
   }
 });
 
-// Функция проверки подключения к БД
 const checkConnection = async () => {
   try {
     const connection = await pool.getConnection();
@@ -52,7 +48,6 @@ const checkConnection = async () => {
   }
 };
 
-// Middleware
 app.use(cors({
   origin: 'http://localhost:5173', 
   credentials: true,
@@ -67,8 +62,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
 
-
-// Middleware аутентификации
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -98,7 +91,6 @@ const authenticateToken = async (req, res, next) => {
 
 const adminRoutes = require('./routes/adminRoutes')(pool, authenticateToken);
 
-// Настройка multer для загрузки файлов
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/');
@@ -112,7 +104,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB
+    fileSize: 5 * 1024 * 1024 
   },
   fileFilter: function (req, file, cb) {
     if (file.mimetype.startsWith('image/')) {
@@ -122,28 +114,22 @@ const upload = multer({
     }
   }
 });
-
-// Маршруты аутентификации
 const authRoutes = require('./routes/authRoutes')(pool, bcrypt, jwt, process.env.JWT_SECRET || 'your-secret-key', authenticateToken);
 app.use('/api/auth', authRoutes);
 
-// Маршруты пользователей
 const userRoutes = require('./routes/userRoutes')(pool, authenticateToken, upload);
 app.use('/api/users', userRoutes);
 
 app.use('/api/admin', adminRoutes);
 
-// Маршруты чатов
 const chatRoutes = require('./routes/chatRoutes')(pool, authenticateToken);
 app.use('/api/chats', chatRoutes);
 
-// Socket.io подключения
 const connectedUsers = new Map();
 
 io.on('connection', (socket) => {
   console.log('🔌 Новое подключение:', socket.id);
 
-  // Аутентификация пользователя
   socket.on('authenticate', async (token) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
@@ -158,13 +144,11 @@ io.on('connection', (socket) => {
         connectedUsers.set(user.user_id, socket.id);
         socket.userId = user.user_id;
         
-        // Обновляем статус онлайн
         await pool.execute(
           'UPDATE users SET is_online = TRUE, last_seen = CURRENT_TIMESTAMP WHERE user_id = ?',
           [user.user_id]
         );
 
-        // Уведомляем других пользователей
         socket.broadcast.emit('user_online', {
           user_id: user.user_id,
           is_online: true
@@ -177,25 +161,21 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Присоединение к комнате чата
   socket.on('join_chat', (chatId) => {
     socket.join(`chat_${chatId}`);
     console.log(`Пользователь присоединился к чату: ${chatId}`);
   });
 
-  // Отправка сообщения
   socket.on('send_message', async (data) => {
     try {
       const { chat_id, content, message_type = 'text', attachment_url = null } = data;
-      
-      // Сохраняем сообщение в БД
+
       const [result] = await pool.execute(
         `INSERT INTO messages (chat_id, user_id, content, message_type, attachment_url) 
          VALUES (?, ?, ?, ?, ?)`,
         [chat_id, socket.userId, content, message_type, attachment_url]
       );
 
-      // Получаем полные данные сообщения
       const [messages] = await pool.execute(
         `SELECT m.*, u.name, u.surname, u.nick, u.avatar_url 
          FROM messages m 
@@ -206,16 +186,13 @@ io.on('connection', (socket) => {
 
       const message = messages[0];
 
-      // Обновляем время последней активности чата
       await pool.execute(
         'UPDATE chats SET last_activity = CURRENT_TIMESTAMP WHERE chat_id = ?',
         [chat_id]
       );
 
-      // Отправляем сообщение всем участникам чата
       io.to(`chat_${chat_id}`).emit('new_message', message);
-      
-      // Уведомляем участников чата о новом сообщении
+
       const [participants] = await pool.execute(
         'SELECT user_id FROM chat_participants WHERE chat_id = ? AND user_id != ?',
         [chat_id, socket.userId]
@@ -238,7 +215,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Отметка сообщений как прочитанных
   socket.on('mark_as_read', async (data) => {
     try {
       const { chat_id, message_ids } = data;
@@ -249,7 +225,6 @@ io.on('connection', (socket) => {
         [message_ids, chat_id]
       );
 
-      // Уведомляем других участников
       socket.to(`chat_${chat_id}`).emit('messages_read', {
         chat_id,
         message_ids,
@@ -261,18 +236,14 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Отключение пользователя
   socket.on('disconnect', async () => {
     if (socket.userId) {
       connectedUsers.delete(socket.userId);
-      
-      // Обновляем статус офлайн
       await pool.execute(
         'UPDATE users SET is_online = FALSE, last_seen = CURRENT_TIMESTAMP WHERE user_id = ?',
         [socket.userId]
       );
 
-      // Уведомляем других пользователей
       socket.broadcast.emit('user_offline', {
         user_id: socket.userId,
         is_online: false
@@ -283,7 +254,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// Тестовые endpoint'ы
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API работает!' });
 });
@@ -296,7 +266,6 @@ app.post('/api/test-body', (req, res) => {
   });
 });
 
-// Обработка ошибок Multer
 app.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
@@ -306,7 +275,6 @@ app.use((error, req, res, next) => {
   res.status(500).json({ error: error.message });
 });
 
-// Запуск сервера
 server.listen(port, async () => {
   console.log('🚀 Сервер запущен на порту: ' + port);
   await checkConnection();

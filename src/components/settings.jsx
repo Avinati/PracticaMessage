@@ -29,7 +29,6 @@ function Settings() {
         cover: false
     });
 
-    // Проверка аутентификации при загрузке компонента
     useEffect(() => {
         checkAuthentication();
     }, []);
@@ -70,7 +69,6 @@ function Settings() {
         }
     };
 
-    // Получение данных пользователя
     const fetchUserProfile = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -109,7 +107,6 @@ function Settings() {
         }
     };
 
-    // Загрузка файла на сервер
     const uploadFile = async (file, type) => {
         const token = localStorage.getItem('token');
         const formData = new FormData();
@@ -137,7 +134,6 @@ function Settings() {
         }
     };
 
-    // Обновление URL аватара или обложки в профиле
     const updateProfileImage = async (imageUrl, field) => {
         const token = localStorage.getItem('token');
         
@@ -164,7 +160,6 @@ function Settings() {
         }
     };
 
-    // Загрузка аватара
     const handleAvatarChange = async (event) => {
         if (!isAuthenticated) {
             alert('Войдите в аккаунт чтобы изменить аватар');
@@ -175,13 +170,11 @@ function Settings() {
         const file = event.target.files[0];
         if (!file) return;
 
-        // Проверка типа файла
         if (!file.type.startsWith('image/')) {
             setMessage('Пожалуйста, выберите изображение');
             return;
         }
 
-        // Проверка размера файла (макс 5MB)
         if (file.size > 5 * 1024 * 1024) {
             setMessage('Размер файла не должен превышать 5MB');
             return;
@@ -191,13 +184,8 @@ function Settings() {
         setMessage('');
 
         try {
-            // Загружаем файл
             const fileUrl = await uploadFile(file, 'avatar');
-            
-            // Обновляем профиль
             await updateProfileImage(fileUrl, 'avatar_url');
-            
-            // Обновляем состояние
             setUserData(prev => ({ ...prev, avatar_url: fileUrl }));
             setMessage('Аватар успешно обновлен!');
             
@@ -206,11 +194,10 @@ function Settings() {
             setMessage('Ошибка при загрузке аватара');
         } finally {
             setUploading(prev => ({ ...prev, avatar: false }));
-            event.target.value = ''; // Сбрасываем input
+            event.target.value = ''; 
         }
     };
 
-    // Загрузка обложки
     const handleCoverChange = async (event) => {
         if (!isAuthenticated) {
             alert('Войдите в аккаунт чтобы изменить обложку');
@@ -250,7 +237,6 @@ function Settings() {
         }
     };
 
-    // Сохранение изменений
     const handleSaveChanges = async () => {
         if (!isAuthenticated) {
             alert('Войдите в аккаунт чтобы сохранить изменения');
@@ -302,7 +288,6 @@ function Settings() {
         }
     };
 
-    // Удаление аккаунта
     const handleDeleteAccount = async () => {
         if (!isAuthenticated) {
             alert('Войдите в аккаунт чтобы удалить его');
@@ -347,7 +332,6 @@ function Settings() {
         }
     };
 
-    // Обработчик изменения полей
     const handleInputChange = (field, value) => {
         if (!isAuthenticated) {
             alert('Войдите в аккаунт чтобы редактировать профиль');
@@ -360,7 +344,6 @@ function Settings() {
         }));
     };
 
-    // Обработчик клика по кнопке профиля
     const handleProfileClick = () => {
         if (!isAuthenticated) {
             navigate('/login');
@@ -369,7 +352,6 @@ function Settings() {
         }
     };
 
-    // Если проверка авторизации еще не завершена, показываем загрузку
     if (!authChecked) {
         return (
             <div className="main-content">
@@ -429,14 +411,12 @@ function Settings() {
                 </div>
 
                 <div className="settings-container">
-                    {/* Сообщения об ошибках/успехе */}
                     {message && (
                         <div className={`message ${message.includes('успешно') ? 'success' : 'error'}`}>
                             {message}
                         </div>
                     )}
 
-                    {/* Баннер если не авторизован */}
                     {!isAuthenticated && (
                         <div className="auth-warning">
                             <div className="warning-content">
@@ -574,8 +554,7 @@ function Settings() {
                                 disabled={loading || !isAuthenticated}
                             />
                         </div>
-
-                        {/* Кнопки действий */}
+                        
                         <div className="action-buttons">
                             <button 
                                 className="delete-account-btn"

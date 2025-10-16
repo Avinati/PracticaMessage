@@ -3,7 +3,6 @@ const express = require('express');
 const adminRoutes = (pool, authenticateToken) => {
   const router = express.Router();
 
-  // Middleware для проверки прав администратора
   const requireAdmin = (req, res, next) => {
     if (req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Требуются права администратора' });
@@ -11,7 +10,6 @@ const adminRoutes = (pool, authenticateToken) => {
     next();
   };
 
-  // Получение статистики платформы
   router.get('/stats', authenticateToken, requireAdmin, async (req, res) => {
     try {
       const [userStats] = await pool.execute(`
@@ -52,7 +50,6 @@ const adminRoutes = (pool, authenticateToken) => {
     }
   });
 
-  // Получение списка пользователей с пагинацией - ИСПРАВЛЕННАЯ ВЕРСИЯ
   router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { page = 1, limit = 20, search = '' } = req.query;
@@ -81,7 +78,6 @@ const adminRoutes = (pool, authenticateToken) => {
         countParams = [searchQuery, searchQuery, searchQuery];
       }
 
-      // Используем интерполяцию для LIMIT и OFFSET
       baseQuery += ` ORDER BY created_at DESC LIMIT ${limitNum} OFFSET ${offset}`;
 
       const [users] = await pool.execute(baseQuery, queryParams);
@@ -102,7 +98,6 @@ const adminRoutes = (pool, authenticateToken) => {
     }
   });
 
-  // Блокировка/разблокировка пользователя
   router.post('/users/:userId/toggle-ban', authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { userId } = req.params;
@@ -137,7 +132,6 @@ const adminRoutes = (pool, authenticateToken) => {
     }
   });
 
-  // Получение списка постов для модерации - ИСПРАВЛЕННАЯ ВЕРСИЯ
   router.get('/posts', authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { page = 1, limit = 20, status = 'all' } = req.query;
@@ -165,7 +159,6 @@ const adminRoutes = (pool, authenticateToken) => {
         countQuery += ` WHERE p.is_published = FALSE`;
       }
 
-      // Используем интерполяцию для LIMIT и OFFSET
       baseQuery += ` ORDER BY p.created_at DESC LIMIT ${limitNum} OFFSET ${offset}`;
 
       const [posts] = await pool.execute(baseQuery, queryParams);
@@ -185,7 +178,6 @@ const adminRoutes = (pool, authenticateToken) => {
     }
   });
 
-  // Публикация/снятие поста
   router.post('/posts/:postId/toggle-publish', authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { postId } = req.params;
@@ -216,7 +208,6 @@ const adminRoutes = (pool, authenticateToken) => {
     }
   });
 
-  // Удаление поста
   router.delete('/posts/:postId', authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { postId } = req.params;
@@ -237,7 +228,6 @@ const adminRoutes = (pool, authenticateToken) => {
     }
   });
 
-  // Получение списка чатов - ИСПРАВЛЕННАЯ ВЕРСИЯ
   router.get('/chats', authenticateToken, requireAdmin, async (req, res) => {
     try {
       const { page = 1, limit = 20 } = req.query;
@@ -245,7 +235,6 @@ const adminRoutes = (pool, authenticateToken) => {
       const limitNum = parseInt(limit);
       const offset = (pageNum - 1) * limitNum;
 
-      // Используем интерполяцию для LIMIT и OFFSET
       const query = `
         SELECT 
           c.*,

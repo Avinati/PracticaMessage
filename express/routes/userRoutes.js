@@ -5,7 +5,6 @@ const fs = require('fs');
 const userRoutes = (pool, authenticateToken, upload) => {
   const router = express.Router();
 
-  // Получение профиля пользователя
   router.get('/profile', authenticateToken, async (req, res) => {
     try {
       const [users] = await pool.execute(
@@ -26,7 +25,6 @@ const userRoutes = (pool, authenticateToken, upload) => {
     }
   });
 
-  // Получение профиля другого пользователя по ID
   router.get('/profile/:userId', authenticateToken, async (req, res) => {
     try {
       const { userId } = req.params;
@@ -46,7 +44,6 @@ const userRoutes = (pool, authenticateToken, upload) => {
         return res.status(404).json({ error: 'Пользователь не найден' });
       }
 
-      // Проверяем статус дружбы
       const [friendship] = await pool.execute(
         `SELECT status, action_user_id 
          FROM friendships 
@@ -75,13 +72,11 @@ const userRoutes = (pool, authenticateToken, upload) => {
     }
   });
 
-  // Обновление профиля пользователя
   router.put('/profile', authenticateToken, async (req, res) => {
     try {
       const { name, surname, nick, avatar_url, cover_url } = req.body;
       const userId = req.user.user_id;
 
-      // Проверка уникальности никнейма
       if (nick && nick !== req.user.nick) {
         const [existingNicks] = await pool.execute(
           'SELECT user_id FROM users WHERE nick = ? AND user_id != ?',
@@ -108,7 +103,6 @@ const userRoutes = (pool, authenticateToken, upload) => {
         ]
       );
 
-      // Получаем обновленные данные
       const [users] = await pool.execute(
         `SELECT user_id, name, surname, nick, email, role, is_active, 
                 avatar_url, cover_url, is_online, last_seen, created_at, updated_at 
@@ -126,14 +120,12 @@ const userRoutes = (pool, authenticateToken, upload) => {
     }
   });
 
-  // Загрузка файлов (аватар/обложка)
   router.post('/upload', authenticateToken, upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'Файл не загружен' });
       }
 
-      // Формируем URL файла
       const fileUrl = `http://localhost:5000/uploads/${req.file.filename}`;
 
       res.json({
@@ -147,12 +139,10 @@ const userRoutes = (pool, authenticateToken, upload) => {
     }
   });
 
-  // Удаление аккаунта
   router.delete('/delete-account', authenticateToken, async (req, res) => {
     try {
       const userId = req.user.user_id;
-      
-      // Вместо полного удаления, деактивируем аккаунт
+
       await pool.execute(
         'UPDATE users SET is_active = FALSE, is_online = FALSE WHERE user_id = ?',
         [userId]
@@ -183,7 +173,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     const searchQuery = `%${query}%`;
     const userId = req.user.user_id;
 
-    // САМЫЙ ПРОСТОЙ ВОЗМОЖНЫЙ ЗАПРОС
     const [users] = await pool.execute(
       `SELECT user_id, name FROM users 
        WHERE name LIKE ? AND user_id != ? 
@@ -206,7 +195,7 @@ router.get('/search', authenticateToken, async (req, res) => {
     });
   }
 });
-  // Поиск пользователей с фильтрацией по друзьям
+
   router.get('/search/friends', authenticateToken, async (req, res) => {
     try {
       const { query, limit = 20 } = req.query;
@@ -247,7 +236,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Поиск пользователей для чата (исключая уже имеющиеся чаты)
   router.get('/search/for-chat', authenticateToken, async (req, res) => {
     try {
       const { query, limit = 20 } = req.query;
@@ -293,7 +281,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Получение рекомендуемых пользователей
   router.get('/suggested', authenticateToken, async (req, res) => {
     try {
       const { limit = 10 } = req.query;
@@ -342,8 +329,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // ... остальные ваши маршруты (посты, друзья, лайки и т.д.) остаются без изменений
-  // Создание поста
   router.post('/posts', authenticateToken, async (req, res) => {
     console.log('=== СОЗДАНИЕ ПОСТА ===');
     console.log('Body received:', req.body);
@@ -359,12 +344,10 @@ router.get('/search', authenticateToken, async (req, res) => {
 
       console.log('Parsed data:', { title, content, userId });
 
-      // Валидация
       if (!content || content.trim() === '') {
         return res.status(400).json({ error: 'Содержание поста не может быть пустым' });
       }
 
-      // Создаем пост
       const [result] = await pool.execute(
         `INSERT INTO posts (user_id, title, content, image_url, video_url, is_public) 
          VALUES (?, ?, ?, ?, ?, ?)`,
@@ -389,12 +372,9 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Получение ленты постов
   router.get('/posts/feed', authenticateToken, async (req, res) => {
     try {
       const userId = req.user.user_id;
-      
-      // Получаем посты пользователя и его друзей
       const [posts] = await pool.execute(
         `SELECT p.*, 
                 u.name, u.surname, u.nick, u.avatar_url, u.cover_url,
@@ -421,13 +401,10 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Лайк поста
   router.post('/posts/:postId/like', authenticateToken, async (req, res) => {
     try {
       const { postId } = req.params;
       const userId = req.user.user_id;
-
-      // Проверяем, существует ли пост
       const [posts] = await pool.execute(
         'SELECT post_id FROM posts WHERE post_id = ? AND is_published = TRUE',
         [postId]
@@ -436,21 +413,17 @@ router.get('/search', authenticateToken, async (req, res) => {
       if (posts.length === 0) {
         return res.status(404).json({ error: 'Пост не найден' });
       }
-
-      // Проверяем, не лайкнул ли уже пользователь
       const [existingLikes] = await pool.execute(
         'SELECT like_id FROM post_likes WHERE post_id = ? AND user_id = ?',
         [postId, userId]
       );
 
       if (existingLikes.length > 0) {
-        // Удаляем лайк
         await pool.execute(
           'DELETE FROM post_likes WHERE post_id = ? AND user_id = ?',
           [postId, userId]
         );
         
-        // Обновляем счетчик лайков в посте
         await pool.execute(
           'UPDATE posts SET likes_count = likes_count - 1 WHERE post_id = ?',
           [postId]
@@ -461,13 +434,11 @@ router.get('/search', authenticateToken, async (req, res) => {
           liked: false 
         });
       } else {
-        // Добавляем лайк
         await pool.execute(
           'INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)',
           [postId, userId]
         );
         
-        // Обновляем счетчик лайков в посте
         await pool.execute(
           'UPDATE posts SET likes_count = likes_count + 1 WHERE post_id = ?',
           [postId]
@@ -484,9 +455,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Управление друзьями
-
-  // Отправка запроса в друзья
   router.post('/friends/request', authenticateToken, async (req, res) => {
     try {
         const { targetUserId } = req.body;
@@ -496,7 +464,6 @@ router.get('/search', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Нельзя отправить запрос самому себе' });
         }
 
-        // Проверяем существование пользователя
         const [targetUsers] = await pool.execute(
             'SELECT user_id FROM users WHERE user_id = ? AND is_active = TRUE',
             [targetUserId]
@@ -506,7 +473,6 @@ router.get('/search', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
 
-        // Проверяем, не отправили ли уже запрос
         const [existingRequests] = await pool.execute(
             `SELECT friendship_id FROM friendships 
              WHERE (user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)`,
@@ -517,7 +483,6 @@ router.get('/search', authenticateToken, async (req, res) => {
             return res.status(409).json({ error: 'Запрос в друзья уже отправлен' });
         }
 
-        // Создаем запрос в друзья
         await pool.execute(
             'INSERT INTO friendships (user_id1, user_id2, status, action_user_id) VALUES (?, ?, ?, ?)',
             [userId, targetUserId, 'pending', userId]
@@ -530,13 +495,10 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Принятие запроса в друзья
   router.post('/friends/accept', authenticateToken, async (req, res) => {
     try {
         const { friendshipId } = req.body;
         const userId = req.user.user_id;
-
-        // Проверяем, что запрос существует и адресован текущему пользователю
         const [friendships] = await pool.execute(
             'SELECT * FROM friendships WHERE friendship_id = ? AND user_id2 = ? AND status = ?',
             [friendshipId, userId, 'pending']
@@ -545,8 +507,6 @@ router.get('/search', authenticateToken, async (req, res) => {
         if (friendships.length === 0) {
             return res.status(404).json({ error: 'Запрос в друзья не найден' });
         }
-
-        // Принимаем запрос
         await pool.execute(
             'UPDATE friendships SET status = ?, action_user_id = ?, updated_at = CURRENT_TIMESTAMP WHERE friendship_id = ?',
             ['accepted', userId, friendshipId]
@@ -559,7 +519,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Отклонение запроса в друзья
   router.post('/friends/decline', authenticateToken, async (req, res) => {
     try {
         const { friendshipId } = req.body;
@@ -574,7 +533,6 @@ router.get('/search', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Запрос в друзья не найден' });
         }
 
-        // Отклоняем запрос
         await pool.execute(
             'UPDATE friendships SET status = ?, action_user_id = ?, updated_at = CURRENT_TIMESTAMP WHERE friendship_id = ?',
             ['rejected', userId, friendshipId]
@@ -587,13 +545,10 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Добавление поста в избранное
   router.post('/posts/:postId/favorite', authenticateToken, async (req, res) => {
     try {
         const { postId } = req.params;
         const userId = req.user.user_id;
-
-        // Проверяем, существует ли пост
         const [posts] = await pool.execute(
             'SELECT post_id FROM posts WHERE post_id = ? AND is_published = TRUE',
             [postId]
@@ -603,7 +558,7 @@ router.get('/search', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Пост не найден' });
         }
 
-        // Проверяем, не добавлен ли уже в избранное
+
         const [existingFavorites] = await pool.execute(
             'SELECT favorite_id FROM user_favorites WHERE post_id = ? AND user_id = ?',
             [postId, userId]
@@ -613,7 +568,6 @@ router.get('/search', authenticateToken, async (req, res) => {
             return res.status(409).json({ error: 'Пост уже в избранном' });
         }
 
-        // Добавляем в избранное
         await pool.execute(
             'INSERT INTO user_favorites (user_id, post_id) VALUES (?, ?)',
             [userId, postId]
@@ -629,7 +583,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Удаление поста из избранного
   router.delete('/posts/:postId/favorite', authenticateToken, async (req, res) => {
     try {
         const { postId } = req.params;
@@ -654,7 +607,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Получение конкретного поста по ID
   router.get('/posts/:postId', authenticateToken, async (req, res) => {
     try {
       const { postId } = req.params;
@@ -683,7 +635,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Проверка, добавлен ли пост в избранное
   router.get('/posts/:postId/favorite/check', authenticateToken, async (req, res) => {
     try {
         const { postId } = req.params;
@@ -703,7 +654,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Получение избранных постов пользователя
   router.get('/favorites/posts', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.user_id;
@@ -730,13 +680,11 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Удаление из друзей
   router.delete('/friends/remove', authenticateToken, async (req, res) => {
     try {
         const { friendId } = req.body;
         const userId = req.user.user_id;
 
-        // Удаляем дружбу
         const [result] = await pool.execute(
             `DELETE FROM friendships 
              WHERE ((user_id1 = ? AND user_id2 = ?) OR (user_id1 = ? AND user_id2 = ?)) 
@@ -755,7 +703,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Получение списка друзей
   router.get('/friends', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.user_id;
@@ -780,7 +727,6 @@ router.get('/search', authenticateToken, async (req, res) => {
     }
   });
 
-  // Получение входящих запросов в друзья
   router.get('/friends/requests', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.user_id;
